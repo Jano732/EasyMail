@@ -564,6 +564,8 @@ EasyMail_autogen/timestamp: \
 	D:/Projekty/INZYNIERKA/EasyMail/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/3.30.5/CMakeRCCompiler.cmake \
 	D:/Projekty/INZYNIERKA/EasyMail/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/3.30.5/CMakeSystem.cmake \
 	D:/Projekty/INZYNIERKA/EasyMail/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/EasyMail_autogen/moc_predefs.h \
+	D:/Projekty/INZYNIERKA/EasyMail/email.cpp \
+	D:/Projekty/INZYNIERKA/EasyMail/email.h \
 	D:/Projekty/INZYNIERKA/EasyMail/main.cpp \
 	D:/Projekty/INZYNIERKA/EasyMail/mainwindow.cpp \
 	D:/Projekty/INZYNIERKA/EasyMail/mainwindow.h \

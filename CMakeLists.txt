@@ -1,16 +1,27 @@
 cmake_minimum_required(VERSION 3.16)
-
 project(EasyMail VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+
+# Bezpośrednie wskazanie ścieżek do CURL
+set(CURL_INCLUDE_DIR "C:/msys64/mingw64/include")
+set(CURL_LIBRARY "C:/msys64/mingw64/lib/libcurl.dll.a")
+
+# Opcjonalnie - sprawdź czy pliki istnieją
+if(NOT EXISTS ${CURL_INCLUDE_DIR}/curl/curl.h)
+    message(FATAL_ERROR "CURL headers not found at ${CURL_INCLUDE_DIR}")
+endif()
+
+if(NOT EXISTS ${CURL_LIBRARY})
+    message(FATAL_ERROR "CURL library not found at ${CURL_LIBRARY}")
+endif()
 
 set(PROJECT_SOURCES
         main.cpp
@@ -24,18 +35,13 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         message.h message.cpp
+        email.h email.cpp
     )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET EasyMail APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
 else()
     if(ANDROID)
         add_library(EasyMail SHARED
             ${PROJECT_SOURCES}
         )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
         add_executable(EasyMail
             ${PROJECT_SOURCES}
@@ -43,14 +49,19 @@ else()
     endif()
 endif()
 
-target_link_libraries(EasyMail PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+# Dodaj include directory
+target_include_directories(EasyMail PRIVATE ${CURL_INCLUDE_DIR})
 
-# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
-# If you are developing for iOS or macOS you should consider setting an
-# explicit, fixed bundle identifier manually though.
+target_link_libraries(EasyMail
+    PRIVATE
+        Qt${QT_VERSION_MAJOR}::Widgets
+        ${CURL_LIBRARY}
+)
+
 if(${QT_VERSION} VERSION_LESS 6.1.0)
   set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.EasyMail)
 endif()
+
 set_target_properties(EasyMail PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}

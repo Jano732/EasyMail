@@ -323,6 +323,12 @@
 	"HEADERS" : 
 	[
 		[
+			"D:/Projekty/INZYNIERKA/EasyMail/email.h",
+			"MU",
+			"EWIEGA46WW/moc_email.cpp",
+			null
+		],
+		[
 			"D:/Projekty/INZYNIERKA/EasyMail/mainwindow.h",
 			"MU",
 			"EWIEGA46WW/moc_mainwindow.cpp",
@@ -361,6 +367,7 @@
 	],
 	"MOC_INCLUDES" : 
 	[
+		"C:/msys64/mingw64/include",
 		"C:/Qt/6.10.0/mingw_64/include/QtCore",
 		"C:/Qt/6.10.0/mingw_64/include",
 		"C:/Qt/6.10.0/mingw_64/mkspecs/win32-g++",
@@ -406,6 +413,7 @@
 	"SETTINGS_FILE" : "D:/Projekty/INZYNIERKA/EasyMail/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/EasyMail_autogen.dir/AutogenUsed.txt",
 	"SOURCES" : 
 	[
+		[ "D:/Projekty/INZYNIERKA/EasyMail/email.cpp", "MU", null ],
 		[ "D:/Projekty/INZYNIERKA/EasyMail/main.cpp", "MU", null ],
 		[ "D:/Projekty/INZYNIERKA/EasyMail/mainwindow.cpp", "MU", null ],
 		[ "D:/Projekty/INZYNIERKA/EasyMail/message.cpp", "MU", null ]

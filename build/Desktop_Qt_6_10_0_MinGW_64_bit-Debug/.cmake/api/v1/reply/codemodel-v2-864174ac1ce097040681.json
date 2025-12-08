@@ -7,7 +7,7 @@
 				{
 					"build" : ".",
 					"hasInstallRule" : true,
-					"jsonFile" : "directory-.-Debug-3889f1a1d1fb74f155c4.json",
+					"jsonFile" : "directory-.-Debug-4b53a6236f82e35d6aa4.json",
 					"minimumCMakeVersion" : 
 					{
 						"string" : "3.16"
@@ -44,7 +44,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "EasyMail::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-EasyMail-Debug-c253e267fa67a6472ee7.json",
+					"jsonFile" : "target-EasyMail-Debug-609ff9c8593b801f9328.json",
 					"name" : "EasyMail",
 					"projectIndex" : 0
 				},
