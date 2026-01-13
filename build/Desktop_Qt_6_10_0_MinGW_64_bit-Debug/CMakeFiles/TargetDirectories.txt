@@ -1,9 +1,0 @@
-D:/Projekty/INZYNIERKA/EasyMail/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/EasyMail.dir
-D:/Projekty/INZYNIERKA/EasyMail/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/edit_cache.dir
-D:/Projekty/INZYNIERKA/EasyMail/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/rebuild_cache.dir
-D:/Projekty/INZYNIERKA/EasyMail/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/list_install_components.dir
-D:/Projekty/INZYNIERKA/EasyMail/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/install.dir
-D:/Projekty/INZYNIERKA/EasyMail/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/install/local.dir
-D:/Projekty/INZYNIERKA/EasyMail/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/install/strip.dir
-D:/Projekty/INZYNIERKA/EasyMail/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/EasyMail_autogen_timestamp_deps.dir
-D:/Projekty/INZYNIERKA/EasyMail/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/EasyMail_autogen.dir
