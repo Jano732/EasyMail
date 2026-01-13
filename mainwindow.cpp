@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "QDebug"
+#include "email.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -10,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lineEdit_mailto->setEnabled(false);
     ui->plainTextEdit_subject->setEnabled(false);
     ui->textEdit_body->setEnabled(false);
+    initEmailList();
 }
 
 MainWindow::~MainWindow()
@@ -31,9 +33,17 @@ void MainWindow::on_pushButton_newMessage_clicked()
     MainWindow::setMessage(message);
 }
 
+void MainWindow::initEmailList()
+{
+
+}
+
 //ACCESSORS
 
-void MainWindow::setMessage(Message &message) { MainWindow::_messages.push_back(message); }
+void MainWindow::setMessage(Message &message)
+{
+    MainWindow::_messages.push_back(std::make_unique<Message>(message));
+}
 
 
 //DEBUG FUNCS
@@ -44,9 +54,12 @@ void MainWindow::on_pushButton_send_clicked()
     QString subject = ui->plainTextEdit_subject->toPlainText();
     QString body = ui->textEdit_body->toPlainText();
 
-    if(!recipients.isEmpty()) MainWindow::_messages.back().setRecipients(recipients);
-    if(!subject.isEmpty()) MainWindow::_messages.back().setSubject(subject);
-    if(!body.isEmpty()) MainWindow::_messages.back().setBody(body);
+    if(!recipients.isEmpty()) MainWindow::_messages.back()->setRecipients(recipients);
+    if(!subject.isEmpty()) MainWindow::_messages.back()->setSubject(subject);
+    if(!body.isEmpty()) MainWindow::_messages.back()->setBody(body);
 
-    qDebug() << "Message created:" << _messages.back().getRecipients() << ", " << _messages.back().getSubject() << ", " << _messages.back().getBody();
+    // qDebug() << "Message created:" << _messages.back().getRecipients() << ", " << _messages.back().getSubject() << ", " << _messages.back().getBody();
+
+    Email("poniatowski@op.pl", "dupa8", "url", std::move(_messages.back()));
+    // frqDebug() << _messages.back()->getSubject();
 }

@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Network)
+
 
 # Bezpośrednie wskazanie ścieżek do CURL
 set(CURL_INCLUDE_DIR "C:/msys64/mingw64/include")
@@ -36,6 +38,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         message.h message.cpp
         email.h email.cpp
+        imapclient.h imapclient.cpp
     )
 else()
     if(ANDROID)
@@ -56,6 +59,7 @@ target_link_libraries(EasyMail
     PRIVATE
         Qt${QT_VERSION_MAJOR}::Widgets
         ${CURL_LIBRARY}
+        Qt6::Network
 )
 
 if(${QT_VERSION} VERSION_LESS 6.1.0)

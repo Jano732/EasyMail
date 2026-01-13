@@ -83,9 +83,9 @@
         <item>
          <widget class="QListWidget" name="listWidget">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
-            <horstretch>30</horstretch>
-            <verstretch>200</verstretch>
+           <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
            </sizepolicy>
           </property>
           <property name="minimumSize">

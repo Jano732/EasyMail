@@ -1,6 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "email.h"
+#include "imapclient.h"
 #include "message.h"
 #include <QMainWindow>
 
@@ -19,6 +21,7 @@ public:
     ~MainWindow();
 
     void setMessage(Message &message);
+    void initEmailList();
 
 private slots:
 
@@ -28,6 +31,11 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    std::vector<Message> _messages;
+    ImapClient client{"imap.poczta.onet.pl", 993, "poniatowski@op.pl", "YY22-OF81-XMPQ-Z9IE"};
+    // std::vector<Message> _messages;
+    std::vector<std::unique_ptr<Message>> _messages;
+    std::vector<Email*> emails;
+
 };
 #endif // MAINWINDOW_H
+

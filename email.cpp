@@ -1,7 +1,25 @@
 #include "email.h"
 #include "curl/curl.h"
+#include <_mingw_mac.h>
+#include <qdebug.h>
 
-Email::Email() {}
+Email::Email(QString username, QString password, QString url, std::unique_ptr<Message> message):
+    _username(username),
+    _password(password),
+    _smtp_url(url),
+    _message(std::move(message)) {}
+
+// Email::Email(QString username, QString password, QString url, Message* message):
+//     _username(username),
+//     _password(password),
+//     _smtp_url(url),
+//     _message(message) {qDebug() << _username << ", " << _password << ", " << _smtp_url << ", " << _message->getSubject();}
+
+Email::~Email()
+{
+    qDebug() << "Zadziałał destruktor klasy Emial: " << _message->getSubject();
+}
+
 
 int Email::sendEmail()
 {
@@ -24,7 +42,7 @@ int Email::sendEmail()
         curl_easy_setopt(curl, CURLOPT_MAIL_FROM, from);
         recipients = curl_slist_append(recipients, to);
         curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
-        curl_easy_setopt(curl, CURLOPT_READFUNCTION, payload_source);
+        //curl_easy_setopt(curl, CURLOPT_READFUNCTION, payload_source);
         curl_easy_setopt(curl, CURLOPT_READDATA, &upload_ctx);
         curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
         // useful for debugging encryped traffic
@@ -46,7 +64,7 @@ size_t Email::payload_source(void* ptr, size_t size, size_t nmemb, void* userp)
 
     UploadStatus* upload = (UploadStatus*)userp;
 
-    const char* data = payload[upload->lines_read];
+    const char* data;// = payload[upload->lines_read];
 
     if (data)
     {

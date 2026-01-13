@@ -97,9 +97,9 @@ public:
         horizontalLayout->setContentsMargins(0, -1, -1, -1);
         listWidget = new QListWidget(centralwidget);
         listWidget->setObjectName("listWidget");
-        QSizePolicy sizePolicy1(QSizePolicy::Policy::Maximum, QSizePolicy::Policy::Minimum);
-        sizePolicy1.setHorizontalStretch(30);
-        sizePolicy1.setVerticalStretch(200);
+        QSizePolicy sizePolicy1(QSizePolicy::Policy::Fixed, QSizePolicy::Policy::Minimum);
+        sizePolicy1.setHorizontalStretch(0);
+        sizePolicy1.setVerticalStretch(0);
         sizePolicy1.setHeightForWidth(listWidget->sizePolicy().hasHeightForWidth());
         listWidget->setSizePolicy(sizePolicy1);
         listWidget->setMinimumSize(QSize(200, 0));
@@ -110,8 +110,11 @@ public:
         listWidget_2 = new QListWidget(centralwidget);
         listWidget_2->setObjectName("listWidget_2");
         listWidget_2->setEnabled(true);
-        sizePolicy1.setHeightForWidth(listWidget_2->sizePolicy().hasHeightForWidth());
-        listWidget_2->setSizePolicy(sizePolicy1);
+        QSizePolicy sizePolicy2(QSizePolicy::Policy::Maximum, QSizePolicy::Policy::Minimum);
+        sizePolicy2.setHorizontalStretch(30);
+        sizePolicy2.setVerticalStretch(200);
+        sizePolicy2.setHeightForWidth(listWidget_2->sizePolicy().hasHeightForWidth());
+        listWidget_2->setSizePolicy(sizePolicy2);
         listWidget_2->setMinimumSize(QSize(200, 0));
         listWidget_2->setMaximumSize(QSize(1000, 16777147));
 
@@ -125,11 +128,11 @@ public:
         verticalLayout->setObjectName("verticalLayout");
         lineEdit_mailto = new QLineEdit(centralwidget);
         lineEdit_mailto->setObjectName("lineEdit_mailto");
-        QSizePolicy sizePolicy2(QSizePolicy::Policy::MinimumExpanding, QSizePolicy::Policy::Fixed);
-        sizePolicy2.setHorizontalStretch(0);
-        sizePolicy2.setVerticalStretch(0);
-        sizePolicy2.setHeightForWidth(lineEdit_mailto->sizePolicy().hasHeightForWidth());
-        lineEdit_mailto->setSizePolicy(sizePolicy2);
+        QSizePolicy sizePolicy3(QSizePolicy::Policy::MinimumExpanding, QSizePolicy::Policy::Fixed);
+        sizePolicy3.setHorizontalStretch(0);
+        sizePolicy3.setVerticalStretch(0);
+        sizePolicy3.setHeightForWidth(lineEdit_mailto->sizePolicy().hasHeightForWidth());
+        lineEdit_mailto->setSizePolicy(sizePolicy3);
         lineEdit_mailto->setEchoMode(QLineEdit::EchoMode::NoEcho);
 
         verticalLayout->addWidget(lineEdit_mailto);
@@ -140,11 +143,11 @@ public:
 
         plainTextEdit_subject = new QPlainTextEdit(centralwidget);
         plainTextEdit_subject->setObjectName("plainTextEdit_subject");
-        QSizePolicy sizePolicy3(QSizePolicy::Policy::Minimum, QSizePolicy::Policy::Preferred);
-        sizePolicy3.setHorizontalStretch(0);
-        sizePolicy3.setVerticalStretch(200);
-        sizePolicy3.setHeightForWidth(plainTextEdit_subject->sizePolicy().hasHeightForWidth());
-        plainTextEdit_subject->setSizePolicy(sizePolicy3);
+        QSizePolicy sizePolicy4(QSizePolicy::Policy::Minimum, QSizePolicy::Policy::Preferred);
+        sizePolicy4.setHorizontalStretch(0);
+        sizePolicy4.setVerticalStretch(200);
+        sizePolicy4.setHeightForWidth(plainTextEdit_subject->sizePolicy().hasHeightForWidth());
+        plainTextEdit_subject->setSizePolicy(sizePolicy4);
         plainTextEdit_subject->setMaximumSize(QSize(16777215, 50));
         plainTextEdit_subject->setStyleSheet(QString::fromUtf8("#plainTextEdit_topic{\n"
 "background-color: #72CC72;\n"
@@ -158,11 +161,11 @@ public:
 
         textEdit_body = new QTextEdit(centralwidget);
         textEdit_body->setObjectName("textEdit_body");
-        QSizePolicy sizePolicy4(QSizePolicy::Policy::Minimum, QSizePolicy::Policy::Expanding);
-        sizePolicy4.setHorizontalStretch(0);
-        sizePolicy4.setVerticalStretch(0);
-        sizePolicy4.setHeightForWidth(textEdit_body->sizePolicy().hasHeightForWidth());
-        textEdit_body->setSizePolicy(sizePolicy4);
+        QSizePolicy sizePolicy5(QSizePolicy::Policy::Minimum, QSizePolicy::Policy::Expanding);
+        sizePolicy5.setHorizontalStretch(0);
+        sizePolicy5.setVerticalStretch(0);
+        sizePolicy5.setHeightForWidth(textEdit_body->sizePolicy().hasHeightForWidth());
+        textEdit_body->setSizePolicy(sizePolicy5);
         textEdit_body->setMinimumSize(QSize(600, 400));
 
         verticalLayout->addWidget(textEdit_body);
