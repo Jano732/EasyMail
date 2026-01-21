@@ -31,7 +31,8 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    ImapClient client{"imap.poczta.onet.pl", 993, "poniatowski@op.pl", "YY22-OF81-XMPQ-Z9IE"};
+    ImapClient client{"imap.poczta.onet.pl", 993, "poniatowski@op.pl", "G320-R5K3-O1DX-4CWH"};
+    // ImapClient client{"imap.gmail.com", 993, "jan.poniatowski2003@gmail.com", "pxtluultxeaixepe"};
     // std::vector<Message> _messages;
     std::vector<std::unique_ptr<Message>> _messages;
     std::vector<Email*> emails;

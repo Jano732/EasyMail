@@ -24,7 +24,9 @@ public:
     QString nextTag();
     QString sendRequest(QString);
     void uidnextFinder(QString);
-    Email parser(QString);
+    QString encode(QString);
+    std::vector<Email> basicDataParser(QString);
+    QStringList subjectParser(QString);
 
 
     // ===== ACCESSORS =====

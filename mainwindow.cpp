@@ -60,6 +60,6 @@ void MainWindow::on_pushButton_send_clicked()
 
     // qDebug() << "Message created:" << _messages.back().getRecipients() << ", " << _messages.back().getSubject() << ", " << _messages.back().getBody();
 
-    Email("poniatowski@op.pl", "dupa8", "url", std::move(_messages.back()));
+    // Email("poniatowski@op.pl", "dupa8", "url", std::move(_messages.back()));
     // frqDebug() << _messages.back()->getSubject();
 }
