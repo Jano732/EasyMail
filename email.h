@@ -16,6 +16,11 @@ class Email
     QString _name;
     QString _address;
     QString _subject;
+    QStringList _to;
+    QStringList _cc;
+    QStringList _bcc;
+    QString _in_reply_to;
+    QString _message_id;
 
 
     // std::unique_ptr<Message> _message;

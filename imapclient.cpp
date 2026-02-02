@@ -1,5 +1,6 @@
 #include "imapclient.h"
 #include "QDebug"
+#include <qregularexpression.h>
 #include <qurl.h>
 #include <winsock2.h>
 
@@ -36,11 +37,13 @@ bool ImapClient::connect()
         uidnextFinder(recieved_data);
         qDebug() << "uidnext = " << _uidnext << "\n===========================\n";
 
-        QString envelope_init = nextTag() + " UID FETCH " + QString::number(_uidnext - 1) + ":" + QString::number(_uidnext - 31) + " (BODY[HEADER.FIELDS (DATE SUBJECT FROM)])\r\n";
+        // QString envelope_init = nextTag() + " UID FETCH " + QString::number(_uidnext - 1) + ":" + QString::number(_uidnext - 31) + " (ENVELOPE)\r\n";
+        QString envelope_init = nextTag() + " UID FETCH " + QString::number(_uidnext - 1) + ":" + QString::number(_uidnext - 5) + " (ENVELOPE)\r\n";
+        // QString envelope_init = nextTag() + " UID FETCH " + "44967" + " (ENVELOPE)\r\n";
         recieved_data = sendRequest(envelope_init);
         qDebug() << recieved_data << "\n===========================\n";
 
-        basicDataParser(recieved_data);
+        initDataParser(recieved_data);
 
         return true;
     }
@@ -81,106 +84,178 @@ void ImapClient::uidnextFinder(QString recieved_data)
     }
 }
 
+QString ImapClient::extractNextToken(QString &data, int &pos) {
 
-QStringList ImapClient::subjectParser(QString input)
-{
-    QStringList recieved_mail_data;
+    while (pos < data.length() && data[pos].isSpace()) pos++;
 
-    if(input.contains("FETCH"))
-    {
-        int start_index, end_index;
+    if (pos >= data.length()) return "";
 
-        start_index = input.indexOf("UID") + 4;
-        end_index = input.indexOf(" ", start_index);
-        QString uid = input.mid(start_index, end_index - start_index);
-        qDebug() << uid;
-        recieved_mail_data.append(uid);
+    if (pos < data.length() && (data[pos] == '(' && data[pos + 1] == '(' && data[pos + 2] == '\"')) pos += 2;
 
-        start_index = input.indexOf("Date: ") + 6;
-        end_index = input.indexOf("\r\n", start_index);
-        QString date = input.mid(start_index, end_index - start_index);
-        qDebug() << date;
-        recieved_mail_data.append(date);
+    if (pos < data.length() && (data[pos] == ')' && data[pos + 1] == ')' && data[pos + 2] == ' ')) pos += 2;
 
-        start_index = input.indexOf("From: ") + 6;
-        end_index = input.indexOf("<", start_index);
-        QString name = input.mid(start_index, end_index - start_index);
-        name = encode(name);
-        qDebug() << name;
-        recieved_mail_data.append(name);
-
-        start_index = input.indexOf("<") + 1;
-        end_index = input.indexOf(">", start_index);
-        QString address = input.mid(start_index, end_index - start_index);
-        qDebug() << address;
-        recieved_mail_data.append(address);
-
-        start_index = input.indexOf("Subject: ") + 9;
-        end_index = input.indexOf("*", start_index);
-        QString subject = input.mid(start_index, end_index - start_index);
-        subject = encode(subject);
-        qDebug() << subject;
-        recieved_mail_data.append(subject);
-        recieved_mail_data.append(QString::number(end_index));
-
+    if (data[pos] == '{') {
+        int end = data.indexOf('}', pos);
+        int size = data.mid(pos + 1, end - pos - 1).toInt();
+        pos = data.indexOf('\n', end) + 1; // Przeskocz do danych za \n
+        QString res = data.mid(pos, size);
+        pos += size;
+        return res;
     }
-    return recieved_mail_data;
+
+    if (data[pos] == '"') {
+        int end = pos;
+        do {
+            end = data.indexOf('"', end + 1);
+        } while (end > 0 && data[end-1] == '\\'); // Obsługa escaped quotes \"
+
+        QString res = data.mid(pos + 1, end - pos - 1);
+        pos = end + 1;
+        return res;
+    }
+
+    int nextSpace = data.indexOf(' ', pos);
+    int nextBracket = data.indexOf(')', pos);
+    int end = (nextSpace < nextBracket && nextSpace != -1) ? nextSpace : nextBracket;
+
+    QString res = data.mid(pos, end - pos);
+    pos = end;
+    return (res == "NIL") ? "" : res;
 }
 
 
-QString ImapClient::encode(QString input)
+void ImapClient::processResponse(QString input) {
+    int pos = 0;
+
+    // 1. Pomijamy początek (np. "* 13453 FETCH")
+    extractNextToken(input, pos); // Zwróci "*"
+    extractNextToken(input, pos); // Zwróci "13453"
+    extractNextToken(input, pos); // Zwróci "FETCH"
+
+    // 2. Szukamy początku sekcji ENVELOPE
+    if (input.mid(pos).contains("ENVELOPE", Qt::CaseInsensitive)) {
+        pos = input.indexOf("ENVELOPE", pos) + 8; // Przeskakujemy słowo ENVELOPE
+
+        // Teraz jesteśmy tuż przed nawiasem otwierającym sekcję ENVELOPE
+        while (pos < input.length() && input[pos] != '(') pos++;
+        pos++; // Wejdź do środka nawiasu
+
+        QString date    = extractNextToken(input, pos);
+        QString subject = extractNextToken(input, pos);
+
+        QString from = extractNextToken(input, pos);
+        from += " <";
+        from += extractNextToken(input, pos); //NIL
+        from += extractNextToken(input, pos);
+        from += "@";
+        from += extractNextToken(input, pos);
+        from += ">";
+
+        pos += 2; // Wejście z listy from do listy sender
+
+        QString sender = extractNextToken(input, pos);
+        sender += " <";
+        sender += extractNextToken(input, pos);
+        sender += extractNextToken(input, pos);
+        sender += "@";
+        sender += extractNextToken(input, pos);
+        sender += ">";
+
+        pos += 2;
+
+        QString reply_to = extractNextToken(input, pos);
+        reply_to += " <";
+        reply_to += extractNextToken(input, pos);
+        reply_to += extractNextToken(input, pos);
+        reply_to += "@";
+        reply_to += extractNextToken(input, pos);
+        reply_to += ">";
+
+        pos += 2;
+        QString to = extractNextToken(input, pos);
+        to += extractNextToken(input, pos);
+        to += " <";
+        to += extractNextToken(input, pos);
+        to += "@";
+        to += extractNextToken(input, pos);
+        to += ">";
+        // to.remove("NIL");
+
+
+        qDebug() << "Data:" << decode(date);
+        qDebug() << "Temat:" << decode(subject); // Twoja funkcja dekodująca UTF-8
+        qDebug() << "Od:" << decode(from);
+        qDebug() << "Sender:" << decode(sender);
+        qDebug() << "Reply To:" << decode(reply_to);
+        qDebug() << "To:" << decode(to);
+        qDebug() << "=======================";
+    }
+}
+
+
+QString ImapClient::decode(QString input)
 {
-    QStringList parts = input.split("?");
+    // Czyścimy białe znaki na końcach i dzielimy po spacjach/nowych liniach
+    QStringList phrases = input.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+    QString output;
+    bool lastWasEncoded = false;
 
-    if(parts.size() >= 4)
+    for(int i = 0; i < phrases.size(); i++)
     {
-        // qDebug() << parts.at(0) << ", " << parts.at(1) << ", " << parts.at(2) << ", " << parts.at(3);
-        QString encoding = parts.at(2);
-        QString subject = parts.at(3);
-        // qDebug() << "separated subject: " << subject;
+        QString current = phrases.at(i);
+        QStringList parts = current.split("?");
 
-        if(encoding == 'B') //Base64
+        // Sprawdzamy czy to format =?charset?encoding?data?=
+        if(current.startsWith("=?") && current.endsWith("?=") && parts.size() >= 4)
         {
-            QString output = QByteArray::fromBase64(subject.toUtf8());
-            return output;
+            QString encoding = parts.at(2).toUpper();
+            QString subject = parts.at(3);
+            QByteArray decodedBytes;
+
+            if(encoding == "B") // Base64
+            {
+                decodedBytes = QByteArray::fromBase64(subject.toUtf8());
+            }
+            else if(encoding == "Q") // Quoted-Printable
+            {
+                subject.replace("=", "%");
+                subject.replace("_", " ");
+                decodedBytes = QByteArray::fromPercentEncoding(subject.toUtf8());
+            }
+
+            output += QString::fromUtf8(decodedBytes);
+            lastWasEncoded = true;
+            // Nie dodajemy spacji! RFC mówi, żeby ignorować białe znaki między zakodowanymi członami.
         }
-        else if(encoding == 'Q') //Quoted Printed
+        else
         {
-            subject.replace("=", "%");
-            subject.replace("_", " ");
-            QString output = QByteArray::fromPercentEncoding(subject.toUtf8());
-            return output;
+            // Jeśli poprzedni fragment NIE był zakodowany, a ten jest zwykłym tekstem,
+            // lub na odwrót - dodajemy spację (o ile output nie jest pusty).
+            if (!output.isEmpty() && !lastWasEncoded) {
+                output += " ";
+            } else if (!output.isEmpty() && lastWasEncoded) {
+                // Jeśli przechodzimy z zakodowanego na zwykły tekst, spacja powinna zostać
+                output += " ";
+            }
+
+            output += current;
+            lastWasEncoded = false;
         }
     }
-    return input;
+    return output.trimmed();
 }
 
-std::vector<Email> ImapClient::basicDataParser(QString input)
+
+std::vector<Email> ImapClient::initDataParser(QString input)
 {
-    QStringList part = input.split("*");
-    QStringList res;
-    std::vector<Email> emails;
-    qDebug() << part.size() << ", " << part.at(2);
-    res = subjectParser(part.at(2));
-    // qDebug() << "==========";
-    // qDebug() << res.at(0);
-    // qDebug() << res.at(1);
-    // qDebug() << res.at(2);
-    // qDebug() << res.at(3);
-    // qDebug() << res.at(4);
+    QStringList parts = input.split("*");
 
-    // for(int i = 1; i < 30; i++)
-    // {
-    //     res = subjectParser(part.at(i));
-    //     qDebug() << i;
-    //     Email email(res.at(0), res.at(1), res.at(2), res.at(3), res.at(4));
-    //     emails.push_back(email);
-    // }
-    // qDebug() << emails.size();
-    return emails;
+    for(int i = 0; i < parts.size(); i++)
+    {
+        processResponse(parts.at(i));
+    }
+
 }
-
-
 
 // =================== ACCESSORS ===================
 
