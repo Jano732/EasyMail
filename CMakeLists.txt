@@ -9,7 +9,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Network)
+find_package(Qt6 COMPONENTS Concurrent REQUIRED)
+find_package(Qt6 COMPONENTS Core Gui Widgets Network Sql Quick Qml REQUIRED)
 
 
 # Bezpośrednie wskazanie ścieżek do CURL
@@ -35,10 +38,17 @@ set(PROJECT_SOURCES
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(EasyMail
         MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-        message.h message.cpp
-        email.h email.cpp
-        imapclient.h imapclient.cpp
+
+        main.cpp
+
+        Model/message.h Model/message.cpp
+        Model/email.h Model/email.cpp
+        Infrastructure/imapclient.h Infrastructure/imapclient.cpp
+        Service/service.h Service/service.cpp
+        View/emailmodel.h View/emailmodel.cpp
+        Repository/repositoryemail.h Repository/repositoryemail.cpp
+        main.qml
+
     )
 else()
     if(ANDROID)
@@ -60,7 +70,15 @@ target_link_libraries(EasyMail
         Qt${QT_VERSION_MAJOR}::Widgets
         ${CURL_LIBRARY}
         Qt6::Network
+        Qt6::Concurrent
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Widgets
+        Qt6::Network
+        Qt6::Quick
+        Qt6::Qml
 )
+target_link_libraries(EasyMail PRIVATE Qt${QT_VERSION_MAJOR}::Core)
 
 if(${QT_VERSION} VERSION_LESS 6.1.0)
   set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.EasyMail)
@@ -72,6 +90,12 @@ set_target_properties(EasyMail PROPERTIES
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
+)
+
+qt_add_qml_module(EasyMail
+    URI EmailClient
+    VERSION 1.0
+    QML_FILES main.qml
 )
 
 include(GNUInstallDirs)

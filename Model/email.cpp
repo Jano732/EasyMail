@@ -15,16 +15,42 @@
 //     _smtp_url(url),
 //     _message(message) {qDebug() << _username << ", " << _password << ", " << _smtp_url << ", " << _message->getSubject();}
 
-Email::Email(QString uid, QString date, QString name, QString address, QString subject):
+Email::Email(QString uid, QString date, QString subject, QString from, QString sender, QString reply_to, QString to, QString cc,  QString bcc,  QString in_reply_to, QString message_id):
     _uid(uid),
     _date(date),
-    _name(name),
-    _address(address),
-    _subject(subject) {}
+    _subject(subject),
+    _from(from),
+    _sender(sender),
+    _reply_to(reply_to),
+    _to(to),
+    _cc(cc),
+    _bcc(bcc),
+    _in_reply_to(in_reply_to),
+    _message_id(message_id) {}
 
 Email::Email() {}
 
-QString Email::getSubject() { return _subject; }
+QString Email::getUid() const {return _uid; }
+
+QString Email::getDate() const { return _date; }
+
+QString Email::getSubject() const { return _subject; }
+
+QString Email::getFrom() const { return _from; }
+
+QString Email::getSender() {return _sender; }
+
+QString Email::getReplyTo() { return _reply_to; }
+
+QString Email::getTo() {return _to; }
+
+QString Email::getCc() {return _cc;}
+
+QString Email::getBcc() { return _bcc; }
+
+QString Email::getInreplyTo() {return _in_reply_to; }
+
+QString Email::getMessageId() {return _message_id; }
 
 
 // int Email::sendEmail()
