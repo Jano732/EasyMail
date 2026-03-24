@@ -1,6 +1,6 @@
 #include "email.h"
 #include "curl/curl.h"
-#include <_mingw_mac.h>
+
 #include <qdebug.h>
 
 // Email::Email(QString username, QString password, QString url, std::unique_ptr<Message> message):

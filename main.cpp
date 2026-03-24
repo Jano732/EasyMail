@@ -6,14 +6,17 @@
 #include <QQmlContext>
 #include <QThread>
 #include <qdiriterator.h>
+#include <QtWebEngineQuick/QtWebEngineQuick>
 
 int main(int argc, char *argv[])
 {
+    QtWebEngineQuick::initialize();
+
     QApplication a(argc, argv);
     qRegisterMetaType<std::vector<Email>>("std::vector<Email>");
 
-    auto *client = new ImapClient("imap.poczta.onet.pl", 993, "poniatowski@op.pl", "42GV-2ZNX-A0WY-YZJL");
-    // (ImapClient client{)"imap.gmail.com", 993, "jan.poniatowski2003@gmail.com", "vnuceakmjwrreyli");
+    auto *client = new ImapClient("imap address", 993, "email address", "password");
+
     auto *repository = new RepositoryEmail(client);
 
     QThread *repoThread = new QThread();

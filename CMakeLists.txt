@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(EasyMail VERSION 0.1 LANGUAGES CXX)
 
+set(CMAKE_PREFIX_PATH "C:/Qt/6.10.2/msvc2022_64" CACHE PATH "" FORCE)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -12,7 +13,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Network)
 find_package(Qt6 COMPONENTS Concurrent REQUIRED)
-find_package(Qt6 COMPONENTS Core Gui Widgets Network Sql Quick Qml REQUIRED)
+find_package(Qt6 COMPONENTS Core Gui Widgets Network Sql Quick Qml WebEngineQuick REQUIRED)
 
 
 # Bezpośrednie wskazanie ścieżek do CURL
@@ -77,6 +78,7 @@ target_link_libraries(EasyMail
         Qt6::Network
         Qt6::Quick
         Qt6::Qml
+        Qt6::WebEngineQuick
 )
 target_link_libraries(EasyMail PRIVATE Qt${QT_VERSION_MAJOR}::Core)
 

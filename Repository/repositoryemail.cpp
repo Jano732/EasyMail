@@ -9,7 +9,7 @@ RepositoryEmail::RepositoryEmail(ImapClient *client, QObject *parent)
 
 void RepositoryEmail::envelopeEmailsSlot()
 {
-    QString envelope_request = _client->nextTag() + " UID FETCH " + QString::number(_client->getUid() - 31) + ":" + QString::number(_client->getUid()) + " (ENVELOPE)\r\n";
+    QString envelope_request = _client->nextTag() + " UID FETCH " + QString::number(_client->getUid() - 41) + ":" + QString::number(_client->getUid()) + " (ENVELOPE)\r\n";
     QString response = _client->sendRequest(envelope_request);
     std::vector<Email> recieved_emails = envelopeDataParser(response);
     emit emailsReadySignal(recieved_emails);
@@ -20,10 +20,7 @@ void RepositoryEmail::fetchBodySlot(Email email)
 {
     QString fetch_body_request = _client->nextTag() + " UID FETCH " + email.getUid() + " (BODYSTRUCTURE)\r\n";
     QString response = _client->sendRequest(fetch_body_request);
-    int pos;
-    tokenizeBody(response);
-
-    // parseBodyPart(response, pos);
+    processBodyResponse(response);
     qDebug() << "\n==== ==== ==== ====\n" << response;
 }
 
@@ -131,7 +128,6 @@ Email RepositoryEmail::processEnvelopeResponse(QString input)
 
         QString message_id = extractNextTokenEnvelope(input, pos);
 
-
         // qDebug() << "UID:" << uid;
         // qDebug() << "Data:" << decode(date);
         // qDebug() << "Temat:" << decode(subject);
@@ -234,27 +230,140 @@ std::vector<Email> RepositoryEmail::envelopeDataParser(QString &input)
 }
 
 
-void RepositoryEmail::parseBodyPart(QString& data, int& pos)
+void RepositoryEmail::processBodyResponse(QString& input)
 {
-    qDebug() << data[pos] << data[pos+1] << data[pos+2] << data[pos+3] << data[pos+4];
+    QString current_tag = _client->getTag();
+    _bodyTokens.clear();
+    bodyTokenize(input);
+    int pos = 0;
+    bodyParsePart(pos, "");
+}
 
-    if(data[pos] == '(') parseBodyMultiPart(data, pos);
-    else if (data[pos] == '"') parseBodySinglePart(data, pos);
+void RepositoryEmail::bodyParsePart(int& pos, QString section = "")
+{
+    // qDebug() << "POS: " << _bodyTokens.at(pos) << ", " << _bodyTokens.at(pos + 1);
+    if(_bodyTokens.at(pos)._type == RepositoryEmail::TokenType::LPAREN)
+    {
+        if(_bodyTokens.at(pos+1)._type == RepositoryEmail::TokenType::LPAREN) bodyParseMultiPart(pos, section);
+        else if(_bodyTokens.at(pos+1)._type == RepositoryEmail::TokenType::STRING) bodyParseSinglePart(pos, section);
+    }
 }
 
 
-void RepositoryEmail::parseBodySinglePart(QString& data, int& pos)
+void RepositoryEmail::bodyParseSinglePart(int& pos, QString section)
 {
+    Bodystructure bs{};
+    bs.section = section;
 
+    if(pos < _bodyTokens.size())
+    {
+        pos++;
+            bs.type = _bodyTokens.at(pos)._value;
+            pos++;
+            bs.subtype = _bodyTokens.at(pos)._value;
+            pos++;
+
+            if(_bodyTokens.at(pos)._type == RepositoryEmail::TokenType::LPAREN)
+            {
+                pos++;
+                do
+                {
+                    bs.params.append(_bodyTokens.at(pos)._value);
+                    pos++;
+                } while(_bodyTokens.at(pos)._type != RepositoryEmail::TokenType::RPAREN);
+                pos++;
+            }
+            else
+            {
+                bs.params.append(_bodyTokens.at(pos)._value);
+                pos++;
+            }
+
+            bs.content_id = _bodyTokens.at(pos)._value;
+            pos++;
+            bs.description = _bodyTokens.at(pos)._value;
+            pos++;
+            bs.encoding = _bodyTokens.at(pos)._value;
+            pos++;
+            bs.size = _bodyTokens.at(pos)._value;
+            pos++;
+
+            if(bs.type.toLower() == "text")
+            {
+                bs.lines = _bodyTokens.at(pos)._value;
+                pos++;
+            }
+
+            bs.md5 = _bodyTokens.at(pos)._value;
+            pos++;
+
+            if(_bodyTokens.at(pos)._type == RepositoryEmail::TokenType::LPAREN)
+            {
+                int depth = 0;
+                do
+                {
+                    if(_bodyTokens.at(pos)._type == RepositoryEmail::TokenType::LPAREN) depth++;
+                    else if (_bodyTokens.at(pos)._type == RepositoryEmail::TokenType::RPAREN) depth--;
+                    if(depth > 0 && _bodyTokens.at(pos)._type != RepositoryEmail::TokenType::LPAREN && _bodyTokens.at(pos)._type != RepositoryEmail::TokenType::RPAREN) bs.dispozition.append(_bodyTokens.at(pos)._value);
+                    pos++;
+                } while(depth > 0);
+            }
+            else
+            {
+                bs.dispozition.append(_bodyTokens.at(pos)._value);
+                pos++;
+            }
+
+            bs.language = _bodyTokens.at(pos)._value;
+            pos++;
+            bs.location = _bodyTokens.at(pos)._value;
+            pos += 2;
+
+            qDebug() << "LAST SIGN: " << _bodyTokens.at(pos);
+            qDebug() << bs;
+            _tokenizedBodystructure.push_back(bs);
+    }
 }
 
 
-void RepositoryEmail::parseBodyMultiPart(QString& data, int& pos)
+void RepositoryEmail::bodyParseMultiPart(int& pos, QString section)
 {
-    qDebug() << "Zadziałała metoda Multipart";
+    pos++;
+    int childIndex = 1;
+
+    while(_bodyTokens.at(pos)._type == RepositoryEmail::TokenType::LPAREN)
+    {
+        QString childSection = section.isEmpty() ? QString::number(childIndex) : section + "." + QString::number(childIndex);
+        bodyParsePart(pos, childSection);
+        childIndex++;
+    }
+
+    if(pos < _bodyTokens.size() && _bodyTokens.at(pos)._type == RepositoryEmail::TokenType::STRING)
+    {
+        BodystructureMultipart bsm;
+        bsm.section = section;
+        bsm.subtype = _bodyTokens.at(pos)._value;
+        pos++;
+        qDebug() << "bsm.section: " << bsm.section;
+        qDebug() << "bsm.subtype: " << bsm.subtype;
+        pos += 2;
+        bsm.boundary = _bodyTokens.at(pos)._value;
+        qDebug() << "bsm.boundary: " << bsm.boundary;
+        qDebug() << "=============";
+        pos += 2;
+
+        while(_bodyTokens.at(pos)._type == RepositoryEmail::TokenType::ATOM) pos++;
+
+
+        // qDebug() << _bodyTokens.at(pos - 1)._value << ", " << _bodyTokens.at(pos)._value << ", " << _bodyTokens.at(pos + 1)._value;
+    }
+
+
+    if(pos < _bodyTokens.size() && _bodyTokens.at(pos)._type == RepositoryEmail::TokenType::RPAREN) pos++;
+
 }
 
-void RepositoryEmail::tokenizeBody(QString& data)
+void RepositoryEmail::bodyTokenize(QString& data)
 {
     int pos = 0;
     if(data.contains("BODYSTRUCTURE ("))
@@ -265,9 +374,8 @@ void RepositoryEmail::tokenizeBody(QString& data)
 
     QString current_tag = _client->getTag();
 
-    while((data[pos] != current_tag[0]) && (data[pos + 1] != current_tag[1]) && (data[pos+2] != current_tag[2]) && (data[pos+3] != current_tag[3]))
+    while((data[pos] != current_tag[0]) || (data[pos + 1] != current_tag[1]) || (data[pos+2] != current_tag[2]) || (data[pos+3] != current_tag[3]))
     {
-
         if(data[pos] == '(')
         {
             Token token(RepositoryEmail::TokenType::LPAREN, data[pos]);
@@ -289,7 +397,7 @@ void RepositoryEmail::tokenizeBody(QString& data)
                 pos++;
             } while(data[pos] != '"');
 
-            pos++;
+            pos++;;
             Token token(RepositoryEmail::TokenType::STRING, string);
             _bodyTokens.push_back(token);
         }
@@ -309,9 +417,22 @@ void RepositoryEmail::tokenizeBody(QString& data)
 
     qDebug() << "Liczba tokenów: " << _bodyTokens.size();
 
-    for(auto token : _bodyTokens)
-    {
-        qDebug() << token << "\n";
-    }
+    // for(auto token : _bodyTokens)
+    // {
+    //     qDebug() << token << "\n";
+    // }
 
+    // qDebug() << "==========================";
 }
+
+void RepositoryEmail::skipList(int& pos) {
+    int level = 0;
+    qDebug() << _bodyTokens.at(pos)._value;
+    do {
+        if (_bodyTokens.at(pos)._type == RepositoryEmail::TokenType::LPAREN) level++;
+        if (_bodyTokens.at(pos)._type == RepositoryEmail::TokenType::RPAREN) level--;
+        pos++;
+        qDebug() << "level: " << level;
+    } while (level > 0 && pos < _bodyTokens.size());
+}
+
