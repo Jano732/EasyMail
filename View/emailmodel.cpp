@@ -20,6 +20,7 @@ QVariant EmailModel::data(const QModelIndex &index, int role) const
         case FromRole: return email.getFrom();
         case DateRole: return email.getDate();
         case UidRole: return email.getUid();
+        // case BodyRole: return;
         default: return QVariant();
     }
 }

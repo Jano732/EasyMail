@@ -1,7 +1,8 @@
+#pragma once
 #ifndef EMAIL_H
 #define EMAIL_H
 
-#include "message.h"
+#include <qobject.h>
 
 typedef struct UploadStatus
 {
@@ -23,11 +24,8 @@ class Email
     QString _in_reply_to;
     QString _message_id;
 
-
-
     // std::unique_ptr<Message> _message;
     // Message* _message;
-
 
 public:
     // Email(QString, QString, QString, std::unique_ptr<Message>);

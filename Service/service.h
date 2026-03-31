@@ -1,8 +1,9 @@
+#pragma once
 #ifndef SERVICE_H
 #define SERVICE_H
 
 #include "../Model/email.h"
-#include "../Infrastructure/imapclient.h"
+#include "../Model/message.h"
 #include "../Repository/repositoryemail.h"
 #include "../View/emailmodel.h"
 
@@ -13,6 +14,7 @@ class Service : public QObject
     RepositoryEmail *_repo;
     EmailModel *_email_model;
     std::vector<Email> _emails;
+    std::vector<Message> _messages;
 
 public:
 
@@ -33,6 +35,7 @@ signals:
 public slots:
 
     void onEmailsFetched(const std::vector<Email>);
+    void onBodiesFetched(const ResolvedBody);
 
 };
 

@@ -1,4 +1,6 @@
+#pragma once
 #include "Service/service.h"
+#include "Model/email.h"
 #include "Repository/repositoryemail.h"
 #include "View/emailmodel.h"
 #include <QApplication>
@@ -15,7 +17,8 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     qRegisterMetaType<std::vector<Email>>("std::vector<Email>");
 
-    auto *client = new ImapClient("imap address", 993, "email address", "password");
+    auto *client = new ImapClient("imap.poczta.onet.pl", 993, "poniatowski@op.pl", "F5I3-O0YZ-SXQK-CPKU");
+    // auto *client = new ImapClient("imap.gmail.com", 993, "jan.poniatowski2003@gmail.com", "yvjgmtthjwjcpjzf");
 
     auto *repository = new RepositoryEmail(client);
 
@@ -31,6 +34,7 @@ int main(int argc, char *argv[])
     QObject::connect(service, &Service::requestEnvelopedEmails, repository, &RepositoryEmail::envelopeEmailsSlot);
     QObject::connect(service, &Service::requestBody, repository, &RepositoryEmail::fetchBodySlot);
     QObject::connect(repository, &RepositoryEmail::emailsReadySignal, service, &Service::onEmailsFetched);
+    QObject::connect(repository, &RepositoryEmail::bodyReadySignal, service, &Service::onBodiesFetched);
 
     QObject::connect(repoThread, &QThread::finished, repository, &QObject::deleteLater);
     QObject::connect(repoThread, &QThread::finished, repoThread, &QObject::deleteLater);

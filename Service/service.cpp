@@ -20,15 +20,20 @@ Service::Service(RepositoryEmail *repo, EmailModel* emailmodel, QObject* parent)
 void Service::envelopeEmails()
 {
     emit requestEnvelopedEmails();
-    qDebug() << "Wysłano sygnał requestEnvelopedEmails";
 }
 
 void Service::onEmailsFetched(const std::vector<Email> emails)
 {
     _emails = emails;
     _email_model->setEmails(emails);
-    qDebug() << "Dane odebrane asynchronicznie";
     emit envelopedDataReady();
+}
+
+void Service::onBodiesFetched(ResolvedBody result)
+{
+    qDebug() << result.main_content << "\n==================";
+    qDebug() << result.inline_images.size() << "\n==================";
+    qDebug() << result.attachments.size() << "\n==================";
 }
 
 Q_INVOKABLE void Service::requestBodyByUid(Email email)

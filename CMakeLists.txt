@@ -15,10 +15,20 @@ find_package(Qt6 REQUIRED COMPONENTS Network)
 find_package(Qt6 COMPONENTS Concurrent REQUIRED)
 find_package(Qt6 COMPONENTS Core Gui Widgets Network Sql Quick Qml WebEngineQuick REQUIRED)
 
+set(VMIME_ROOT "C:/vmime/install")
 
-# Bezpośrednie wskazanie ścieżek do CURL
+find_library(VMIME_LIB
+    NAMES vmime
+    PATHS "${VMIME_ROOT}/lib"
+    REQUIRED
+)
+
 set(CURL_INCLUDE_DIR "C:/msys64/mingw64/include")
 set(CURL_LIBRARY "C:/msys64/mingw64/lib/libcurl.dll.a")
+
+if(NOT VMIME_LIB)
+    message(FATAL_ERROR "VMime library not found at ${VMIME_ROOT}/lib")
+endif()
 
 # Opcjonalnie - sprawdź czy pliki istnieją
 if(NOT EXISTS ${CURL_INCLUDE_DIR}/curl/curl.h)
@@ -98,6 +108,7 @@ qt_add_qml_module(EasyMail
     URI EmailClient
     VERSION 1.0
     QML_FILES main.qml
+    SOURCES
 )
 
 include(GNUInstallDirs)

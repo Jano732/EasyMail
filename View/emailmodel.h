@@ -17,7 +17,8 @@ public:
         SubjectRole = Qt::UserRole + 1,
         FromRole,
         DateRole,
-        UidRole
+        UidRole,
+        BodyRole
     };
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;

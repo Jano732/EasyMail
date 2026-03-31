@@ -1,26 +1,19 @@
+#pragma once
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
+#include "../Repository/repositoryemail.h"
 #include <qobject.h>
 class Message
-{
-
-    QString _recipients;
-    QString _subject;
-    QString _body;
-    QString _attachements;
+{  
+    ResolvedBody _resolved_body;
 
 public:
     Message();
+    Message(ResolvedBody&);
     ~Message();
 
-    void setRecipients(const QString &recipient);
-    void setSubject(const QString &subject);
-    void setBody(const QString &body);
 
-    QString getRecipients() const;
-    QString getSubject() const;
-    QString getBody() const;
 };
 
 

@@ -1,8 +1,25 @@
+#pragma once
 #ifndef REPOSITORYEMAIL_H
 #define REPOSITORYEMAIL_H
 
 #include "../Infrastructure/imapclient.h"
+#include "../Model/email.h"
 #include <QObject>
+
+struct ResolvedBody {
+
+    QString main_content;
+    enum class ContentType {HTML, PLAINTEXT, UNKNOWN} content_type = ContentType::UNKNOWN;
+    QMap<QString, QByteArray> inline_images;
+
+    struct Attachment
+    {
+        QString filename;
+        QString mimeType;
+        QByteArray data;
+    };
+    QList<Attachment> attachments;
+};
 
 class RepositoryEmail : public QObject
 {
@@ -55,14 +72,21 @@ class RepositoryEmail : public QObject
     };
 
 
+
     ImapClient *_client;
     std::vector<Token> _bodyTokens;
     std::vector<Bodystructure> _tokenizedBodystructure;
+    std::vector<BodystructureMultipart> _tokenizedBodystructureMultipart;
+    std::vector<QString> _download_list;
+    std::vector<QString> _download_list_atachments;
+    std::vector<QString> _fetched_bodies;
 
 public:
     RepositoryEmail(ImapClient*, QObject* parent = nullptr);
 
     // std::vector<Email> envelope();
+
+
 
     QString decode(QString&);
     QString processList(QString&);
@@ -75,8 +99,13 @@ public:
     void bodyParseSinglePart(int&, QString);
     void bodyParseMultiPart(int&, QString);
     void bodyTokenize(QString&);
+    void bodyProcessNode(QString, BodystructureMultipart&);
+    QString bodyResolveBestPart(QString, QString);
+    Bodystructure analyzeStructure();
+    void resolveBody();
     void skipList(int&);
-
+    QByteArray extractRawBytes(const QString&);
+    QString decodeBodyPart(const QString&, const QString&);
 
 
     friend QDebug operator<<(QDebug, const Token&);
@@ -91,6 +120,7 @@ public slots:
 signals:
 
     void emailsReadySignal(std::vector<Email>);
+    void bodyReadySignal(ResolvedBody);
 
 };
 

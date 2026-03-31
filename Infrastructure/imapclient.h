@@ -1,7 +1,7 @@
+#pragma once
 #ifndef IMAPCLIENT_H
 #define IMAPCLIENT_H
 
-#include "../Model/email.h"
 #include <QSslSocket>
 
 class ImapClient : public QObject
