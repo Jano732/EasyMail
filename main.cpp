@@ -9,12 +9,14 @@
 #include <QThread>
 #include <qdiriterator.h>
 #include <QtWebEngineQuick/QtWebEngineQuick>
+#include <vmime/vmime.hpp>
 
 int main(int argc, char *argv[])
 {
     QtWebEngineQuick::initialize();
 
     QApplication a(argc, argv);
+
     qRegisterMetaType<std::vector<Email>>("std::vector<Email>");
 
     auto *client = new ImapClient("imap.poczta.onet.pl", 993, "poniatowski@op.pl", "F5I3-O0YZ-SXQK-CPKU");
