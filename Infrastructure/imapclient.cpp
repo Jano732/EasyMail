@@ -2,7 +2,7 @@
 #include "QDebug"
 #include <qregularexpression.h>
 #include <qurl.h>
-#include <winsock2.h>
+
 #include <QtConcurrent>
 
 

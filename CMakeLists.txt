@@ -7,9 +7,9 @@ project(EasyMail VERSION 0.1 LANGUAGES CXX)
 if(WIN32)
     set(CMAKE_PREFIX_PATH "C:/Qt/6.10.2/msvc2022_64" CACHE PATH "" FORCE)
 elseif(APPLE)
-    # Homebrew na M2 instaluje Qt tutaj:
-    set(CMAKE_PREFIX_PATH "/opt/homebrew/opt/qt" CACHE PATH "" FORCE)
+    set(CMAKE_PREFIX_PATH "/Users/janponiatowski/Qt/6.10.2/macos" CACHE PATH "" FORCE)
 endif()
+
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -37,8 +37,8 @@ elseif(APPLE)
     # ── macOS (Homebrew M2) ───────────────────────────────────
     set(HOMEBREW_PREFIX "/opt/homebrew")
 
-    set(CURL_INCLUDE_DIR "${HOMEBREW_PREFIX}/include")
-    set(CURL_LIBRARY "${HOMEBREW_PREFIX}/lib/libcurl.dylib")
+    # set(CURL_INCLUDE_DIR "${HOMEBREW_PREFIX}/include")
+    # set(CURL_LIBRARY "${HOMEBREW_PREFIX}/lib/libcurl.dylib")
 
     find_library(VMIME_LIB
         NAMES vmime
@@ -55,13 +55,13 @@ if(NOT VMIME_LIB)
     message(FATAL_ERROR "VMime library not found!")
 endif()
 
-if(NOT EXISTS ${CURL_INCLUDE_DIR}/curl/curl.h)
-    message(FATAL_ERROR "CURL headers not found at ${CURL_INCLUDE_DIR}")
-endif()
+# if(NOT EXISTS ${CURL_INCLUDE_DIR}/curl/curl.h)
+    # message(FATAL_ERROR "CURL headers not found at ${CURL_INCLUDE_DIR}")
+# endif()
 
-if(NOT EXISTS ${CURL_LIBRARY})
-    message(FATAL_ERROR "CURL library not found at ${CURL_LIBRARY}")
-endif()
+# if(NOT EXISTS ${CURL_LIBRARY})
+    # message(FATAL_ERROR "CURL library not found at ${CURL_LIBRARY}")
+# endif()
 
 # ──────────────────────────────────────────────────────────────
 # Pakiety Qt
@@ -71,7 +71,8 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Network)
 find_package(Qt6 COMPONENTS Concurrent REQUIRED)
-find_package(Qt6 COMPONENTS Core Gui Widgets Network Sql Quick Qml WebEngineQuick REQUIRED)
+find_package(Qt6 COMPONENTS Core Gui Widgets Network Sql Quick Qml REQUIRED)
+find_package(Qt6 COMPONENTS WebEngineQuick REQUIRED)
 
 # ──────────────────────────────────────────────────────────────
 # Źródła projektu
@@ -109,7 +110,7 @@ endif()
 # Include directories
 # ──────────────────────────────────────────────────────────────
 target_include_directories(EasyMail PRIVATE
-    ${CURL_INCLUDE_DIR}
+    # ${CURL_INCLUDE_DIR}
     ${VMIME_INCLUDE_DIR}
 )
 
@@ -119,7 +120,7 @@ target_include_directories(EasyMail PRIVATE
 target_link_libraries(EasyMail
     PRIVATE
         Qt${QT_VERSION_MAJOR}::Widgets
-        ${CURL_LIBRARY}
+        # ${CURL_LIBRARY}
         ${VMIME_LIB}
         Qt6::Network
         Qt6::Concurrent
