@@ -20,22 +20,15 @@ public:
 
     explicit Service(RepositoryEmail*, EmailModel*,  QObject* parent = nullptr);
 
-    void envelopeEmails();
-    std::vector<Email> getEmails();
-    EmailModel* getEmailModel();
-    Q_INVOKABLE void requestBodyByUid(Email);
-    Q_INVOKABLE Email getEmailByUid(QString);
+
 
 signals:
 
-    void requestEnvelopedEmails();
-    void envelopedDataReady();
-    void requestBody(Email);
+
 
 public slots:
 
-    void onEmailsFetched(const std::vector<Email>);
-    void onBodiesFetched(const ResolvedBody);
+
 
 };
 

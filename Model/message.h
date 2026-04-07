@@ -5,12 +5,11 @@
 #include "../Repository/repositoryemail.h"
 #include <qobject.h>
 class Message
-{  
-    ResolvedBody _resolved_body;
+{
+
 
 public:
     Message();
-    Message(ResolvedBody&);
     ~Message();
 
 

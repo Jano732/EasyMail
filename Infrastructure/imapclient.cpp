@@ -1,8 +1,13 @@
 #include "imapclient.h"
+#include "Infrastructure/tracerfactory.h"
 #include "QDebug"
+#include "vmime/net/store.hpp"
+#include "vmime/security/cert/X509Certificate.hpp"
+#include "vmime/security/cert/defaultCertificateVerifier.hpp"
+#include "vmime/utility/inputStreamAdapter.hpp"
 #include <qregularexpression.h>
 #include <qurl.h>
-
+#include <fstream>
 #include <QtConcurrent>
 
 
@@ -14,72 +19,115 @@ ImapClient::ImapClient(const QString url, const int port, const QString log, con
     , _password(password)
 {
     connect();
-    login();
-    selectInbox("INBOX");
-    qDebug("FIN");
+    // selectInbox("INBOX");
+    // qDebug("FIN");
 }
 
 
-bool ImapClient::connect()
+void ImapClient::connect()
 {
-    _socket = new QSslSocket(this);
-    _socket->connectToHostEncrypted(_url, _port);
+    try {
 
-    if(_socket->waitForEncrypted(3000)){
+        QString connection_string = "imaps://" + _login + ":" + _password + "@" + _url;
+        vmime::utility::url url(connection_string.toStdString());
 
-        qDebug() << "Server connected!";
-        qDebug() << _socket->readAll() << "\n===========================\n";
-        return true;
+        _session = vmime::net::session::create();
+        _store = _session->getStore(url);
+        _store->setTracerFactory(vmime::make_shared <tracerFactory>());
+        verify();
+        _store->connect();
+
+
+
+        if(_store->isConnected()) qDebug() << "Connected!";
+        else qDebug() << "Connection failed!";
     }
-    else return false;
+    catch(vmime::exception& e)
+    {
+        qDebug() << "Vmime exception - ImapClient::connect(): " << e.what();
+    }
+
+    catch (...)
+    {
+        qDebug() << "Unknown Exception - ImapClient::connect()";
+    }
+
 }
 
-void ImapClient::login()
+void ImapClient::verify()
 {
-    QString login_request = nextTag() + " LOGIN " + _login + " " + _password + "\r\n";
-    QString response = sendRequest(login_request);
-    // qDebug() << response;
+    QString cert_path = "/Users/janponiatowski/Desktop/Projekty/INZYNIERKA/EasyMail/Resources/cacert.pem";
+
+    std::ifstream certFile(cert_path.toStdString(), std::ios::in | std::ios::binary);
+    if(!certFile)
+    {
+        qDebug() << "Error: cannot open cert file!";
+        return;
+    }
+
+    std::string fileContent((std::istreambuf_iterator<char>(certFile)),
+                            std::istreambuf_iterator<char>());
+
+    std::vector<vmime::shared_ptr<vmime::security::cert::X509Certificate>> rootCAs;
+
+    const std::string begin_marker = "-----BEGIN CERTIFICATE-----";
+    const std::string end_marker = "-----END CERTIFICATE-----";
+
+    size_t pos = 0;
+    while(pos < fileContent.size())
+    {
+        size_t begin_pos = fileContent.find(begin_marker, pos);
+        if(begin_pos == std::string::npos) break;
+
+        size_t end_pos = fileContent.find(end_marker, begin_pos);
+        if(end_pos == std::string::npos) break;
+
+        end_pos += end_marker.size();
+        std::string certBlock = fileContent.substr(begin_pos, end_pos - begin_pos);
+
+        vmime::shared_ptr<vmime::security::cert::X509Certificate> cert =
+            vmime::security::cert::X509Certificate::import(
+                reinterpret_cast<const vmime::byte_t*>(certBlock.data()),
+                certBlock.size()
+                );
+
+        if(cert) rootCAs.push_back(cert);
+        pos = end_pos;
+    }
+
+    qDebug() << "Loaded" << rootCAs.size() << "root CA certificates";
+
+    vmime::shared_ptr<vmime::security::cert::defaultCertificateVerifier> vrf =
+        vmime::make_shared<vmime::security::cert::defaultCertificateVerifier>();
+
+    vrf->setX509RootCAs(rootCAs);
+    _store->setCertificateVerifier(vrf);
 }
 
 void ImapClient::selectInbox(QString inbox)
 {
-    QString select_request = nextTag() + " SELECT " + inbox.toUpper() + "\r\n";
-    QString response = sendRequest(select_request);
-    uidnextFinder(response);
-    // qDebug() << response;
+
 }
 
-void ImapClient::uidnextFinder(QString recieved_data)
+vmime::shared_ptr<vmime::security::cert::X509Certificate> ImapClient::loadX509CertificateFromFile(const std::string& path)
 {
-    if(recieved_data.contains("[UIDNEXT"))
+    std::ifstream certFile;
+    certFile.open(path.c_str(), std::ios::in | std::ios::binary);
+
+    if(!certFile)
     {
-        int start_index = recieved_data.indexOf("[UIDNEXT") + 9;
-        int end_index = recieved_data.indexOf("]", start_index);
-        QString uid = recieved_data.mid(start_index, end_index - start_index);
-        _uidnext = uid.toInt();
-        qDebug() << "Next uid:" << _uidnext;
+        qDebug() << "Error with opening cert file!";
+        return nullptr;
     }
+
+    vmime::utility::inputStreamAdapter is(certFile);
+    vmime::shared_ptr<vmime::security::cert::X509Certificate> cert;
+    cert = vmime::security::cert::X509Certificate::import(is);
+
+    return cert;
 }
 
-QString ImapClient::nextTag()
-{
-    _tagNum++;
-    _tag = "A00" + QString::number(_tagNum);
-    return _tag;
-}
 
-QString ImapClient::sendRequest(QString request)
-{
-    QByteArray converted_req = request.toUtf8();
-    QString response;
-    _socket->write(converted_req);
-    _socket->waitForBytesWritten(3000);
-    while(_socket->waitForReadyRead(3000))
-    {
-        response += _socket->readAll();
-    }
-    return response;
-}
 
 
 
@@ -88,15 +136,9 @@ QString ImapClient::sendRequest(QString request)
 
 QString ImapClient::getUrl() { return _url; }
 
-QString ImapClient::getTag() { return _tag; }
-
-int ImapClient::getPort() {return _port; }
 
 QString ImapClient::getLogin() {return _login; }
 
-int ImapClient::getUid() { return _uidnext; }
-
-void ImapClient::setUid(int uid) { _uidnext = uid; }
 
 // std::vector<Email> ImapClient::getEmails() {return _emails; }
 

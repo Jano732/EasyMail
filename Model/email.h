@@ -4,10 +4,7 @@
 
 #include <qobject.h>
 
-typedef struct UploadStatus
-{
-    int counter = 0;
-} uploadStatus;
+
 
 class Email
 {
@@ -31,7 +28,6 @@ public:
     // Email(QString, QString, QString, std::unique_ptr<Message>);
     Email();
     Email(QString, QString, QString, QString, QString, QString, QString, QString, QString, QString, QString);
-    // Email(QString, QString, QString, Message*);
 
     QString getUid() const;
     QString getDate() const;
@@ -45,9 +41,7 @@ public:
     QString getInreplyTo();
     QString getMessageId();
 
-    // int sendEmail();
-    // size_t payload_source(void*, size_t, size_t, void*);
-    // typedef struct {int lines_read;} UploadStatus;
+
 
 };
 

@@ -1,5 +1,4 @@
 #include "email.h"
-#include "curl/curl.h"
 
 #include <qdebug.h>
 

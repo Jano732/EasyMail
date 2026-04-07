@@ -14,46 +14,15 @@
 int main(int argc, char *argv[])
 {
     QtWebEngineQuick::initialize();
-
     QApplication a(argc, argv);
 
-    qRegisterMetaType<std::vector<Email>>("std::vector<Email>");
-
     auto *client = new ImapClient("imap.poczta.onet.pl", 993, "poniatowski@op.pl", "F5I3-O0YZ-SXQK-CPKU");
-    // auto *client = new ImapClient("imap.gmail.com", 993, "jan.poniatowski2003@gmail.com", "yvjgmtthjwjcpjzf");
-
-    auto *repository = new RepositoryEmail(client);
-
-    QThread *repoThread = new QThread();
-    client->moveToThread(repoThread);
-    repository->moveToThread(repoThread);
-    repoThread->start();
-
-    auto *emailModel = new EmailModel();
-    auto *service = new Service(repository, emailModel);
-
-
-    QObject::connect(service, &Service::requestEnvelopedEmails, repository, &RepositoryEmail::envelopeEmailsSlot);
-    QObject::connect(service, &Service::requestBody, repository, &RepositoryEmail::fetchBodySlot);
-    QObject::connect(repository, &RepositoryEmail::emailsReadySignal, service, &Service::onEmailsFetched);
-    QObject::connect(repository, &RepositoryEmail::bodyReadySignal, service, &Service::onBodiesFetched);
-
-    QObject::connect(repoThread, &QThread::finished, repository, &QObject::deleteLater);
-    QObject::connect(repoThread, &QThread::finished, repoThread, &QObject::deleteLater);
-
 
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty("emailModel", emailModel);
-    engine.rootContext()->setContextProperty("service", service);
     engine.load(QUrl(QStringLiteral("qrc:/EmailClient/main.qml")));
 
+    if (engine.rootObjects().isEmpty())
+        return -1;
 
-    service->envelopeEmails();
-
-    int result = a.exec();
-
-    repoThread->quit();
-    repoThread->wait();
-
-    return result;
+    return a.exec();
 }

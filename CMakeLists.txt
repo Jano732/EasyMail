@@ -161,6 +161,11 @@ qt_add_qml_module(EasyMail
     VERSION 1.0
     QML_FILES main.qml
     SOURCES
+    SOURCES Infrastructure/tracer.h Infrastructure/tracer.cpp
+    SOURCES Infrastructure/tracerfactory.h Infrastructure/tracerfactory.cpp
+    SOURCES
+    RESOURCES Resources/cacert.pem
+    RESOURCES Resources/cacert.pem
 )
 
 # ──────────────────────────────────────────────────────────────
