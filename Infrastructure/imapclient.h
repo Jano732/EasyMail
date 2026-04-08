@@ -1,5 +1,6 @@
 #pragma once
 #include "Infrastructure/tracer.h"
+#include "vmime/net/folder.hpp"
 #include "vmime/net/session.hpp"
 #include "vmime/security/cert/X509Certificate.hpp"
 #ifndef IMAPCLIENT_H
@@ -13,8 +14,8 @@ class ImapClient : public QObject
     const QString _login;
     const QString _password;
     vmime::shared_ptr<vmime::net::session> _session;
-    vmime::shared_ptr<vmime::net::service> _store;
-    // std::unique_ptr<tracer> _tracer;
+    vmime::shared_ptr<vmime::net::store> _store;
+    vmime::shared_ptr<vmime::net::folder> _folder;
 
     vmime::shared_ptr<vmime::security::cert::X509Certificate> loadX509CertificateFromFile(const std::string&);
 
@@ -24,7 +25,7 @@ public:
 
     void connect();
     void verify();
-    void selectInbox(QString);
+    void selectDefaultFolder();
 
     // ===== ACCESSORS =====
 
@@ -32,6 +33,8 @@ public:
     QString getLogin();
     int getUid();
     void setUid(int);
+
+    vmime::shared_ptr<vmime::net::folder> getFolder();
 
 };
 

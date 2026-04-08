@@ -17,3 +17,14 @@ Service::Service(RepositoryEmail *repo, EmailModel* emailmodel, QObject* parent)
     , _email_model(emailmodel)
 {};
 
+void Service::onEmailsEnvelope(std::vector<Email>& emails)
+{
+    _emails = emails;
+    _email_model->setEmails(_emails);
+    emit envelopedDataReady();
+}
+
+void Service::envelopeEmails()
+{
+    emit requestEnvelopedEmails();
+}

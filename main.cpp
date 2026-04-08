@@ -16,10 +16,20 @@ int main(int argc, char *argv[])
     QtWebEngineQuick::initialize();
     QApplication a(argc, argv);
 
-    auto *client = new ImapClient("imap.poczta.onet.pl", 993, "poniatowski@op.pl", "F5I3-O0YZ-SXQK-CPKU");
+    auto *client = new ImapClient("imap.poczta.onet.pl", 993, "poniatowski@op.pl", "password");
+    auto *repository = new RepositoryEmail(client);
+    auto *emailModel = new EmailModel();
+    auto *service = new Service(repository, emailModel);
+
+    QObject::connect(repository, &RepositoryEmail::emailsEnvelopedReady, service, &Service::onEmailsEnvelope);
+    QObject::connect(service, &Service::requestEnvelopedEmails,repository, &RepositoryEmail::envelopeEmailsSlot);
 
     QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("emailModel", emailModel);
+    engine.rootContext()->setContextProperty("service", service);
     engine.load(QUrl(QStringLiteral("qrc:/EmailClient/main.qml")));
+
+    service->envelopeEmails();
 
     if (engine.rootObjects().isEmpty())
         return -1;

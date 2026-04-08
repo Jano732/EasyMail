@@ -20,15 +20,16 @@ public:
 
     explicit Service(RepositoryEmail*, EmailModel*,  QObject* parent = nullptr);
 
-
+    void envelopeEmails();
 
 signals:
 
-
+    void envelopedDataReady();
+    void requestEnvelopedEmails();
 
 public slots:
 
-
+    void onEmailsEnvelope(std::vector<Email>&);
 
 };
 

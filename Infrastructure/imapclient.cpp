@@ -1,6 +1,9 @@
+#pragma once
 #include "imapclient.h"
 #include "Infrastructure/tracerfactory.h"
 #include "QDebug"
+#include "vmime/net/folder.hpp"
+#include "vmime/net/service.hpp"
 #include "vmime/net/store.hpp"
 #include "vmime/security/cert/X509Certificate.hpp"
 #include "vmime/security/cert/defaultCertificateVerifier.hpp"
@@ -33,14 +36,16 @@ void ImapClient::connect()
 
         _session = vmime::net::session::create();
         _store = _session->getStore(url);
-        _store->setTracerFactory(vmime::make_shared <tracerFactory>());
+        // _store->setTracerFactory(vmime::make_shared <tracerFactory>());
         verify();
         _store->connect();
 
-
-
-        if(_store->isConnected()) qDebug() << "Connected!";
-        else qDebug() << "Connection failed!";
+        if(_store->isConnected())
+        {
+            qDebug() << "Connected!";
+            selectDefaultFolder();
+        }
+        else qDebug() << "Not connected!";
     }
     catch(vmime::exception& e)
     {
@@ -104,9 +109,10 @@ void ImapClient::verify()
     _store->setCertificateVerifier(vrf);
 }
 
-void ImapClient::selectInbox(QString inbox)
+void ImapClient::selectDefaultFolder()
 {
-
+    _folder = _store->getDefaultFolder();
+    _folder->open(vmime::net::folder::MODE_READ_WRITE);
 }
 
 vmime::shared_ptr<vmime::security::cert::X509Certificate> ImapClient::loadX509CertificateFromFile(const std::string& path)
@@ -128,9 +134,6 @@ vmime::shared_ptr<vmime::security::cert::X509Certificate> ImapClient::loadX509Ce
 }
 
 
-
-
-
 // =================== ACCESSORS ===================
 
 
@@ -138,6 +141,8 @@ QString ImapClient::getUrl() { return _url; }
 
 
 QString ImapClient::getLogin() {return _login; }
+
+vmime::shared_ptr<vmime::net::folder> ImapClient::getFolder() { return _folder; }
 
 
 // std::vector<Email> ImapClient::getEmails() {return _emails; }
