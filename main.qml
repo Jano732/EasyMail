@@ -3,11 +3,21 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtWebEngine
 
+
+
 ApplicationWindow {
+
     visible: true
     width: 800
     height: 600
     title: "Easy Mail"
+
+    Connections{
+        target: service
+        function onHtmlReady(html){
+            emailWebView.loadHtml(html)
+        }
+    }
 
     ColumnLayout{
 
@@ -15,7 +25,7 @@ ApplicationWindow {
         spacing: 1
 
         Rectangle {
-            Layout.alignment: Qt.AlignTop
+            Layout.alignment: Qt.AlignTo
             Layout.fillWidth: true
             Layout.preferredHeight: 50
             color: "#6bb1d1"
@@ -56,7 +66,7 @@ ApplicationWindow {
                         anchors.fill: parent
                         onClicked: {
                             var email = service.getEmailByUid(model.uid)
-                            service.requestBodyByUid(email)
+                            service.requestBodyOfAnEmail(email)
                         }
 
                     }
@@ -108,8 +118,11 @@ ApplicationWindow {
 
             Rectangle {
                 width: 500
+                height: 500
 
                 WebEngineView {
+                    id: emailWebView
+                    anchors.fill: parent
 
                 }
             }

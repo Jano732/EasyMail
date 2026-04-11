@@ -22,14 +22,21 @@ public:
 
     void envelopeEmails();
 
+    Q_INVOKABLE void requestBodyOfAnEmail(Email email);
+
+    Q_INVOKABLE Email getEmailByUid(QString);
+
 signals:
 
     void envelopedDataReady();
     void requestEnvelopedEmails();
+    void requestBody(QString);
+    void htmlReady(QString);
 
 public slots:
 
     void onEmailsEnvelope(std::vector<Email>&);
+    void onHtmlReady(QString);
 
 };
 

@@ -2,8 +2,11 @@
 #include "vmime/addressList.hpp"
 #include "vmime/mailbox.hpp"
 #include "vmime/text.hpp"
+#include "vmime/utility/inputStreamStringAdapter.hpp"
+#include "vmime/utility/outputStreamAdapter.hpp"
 #include <qregularexpression.h>
 #include <qtconcurrentrun.h>
+#include "vmime/utility/encoder/encoderFactory.hpp"
 
 RepositoryEmail::RepositoryEmail(ImapClient *client, QObject *parent)
     : QObject(parent)
@@ -18,10 +21,8 @@ void RepositoryEmail::envelopeEmailsSlot()
     vmime::shared_ptr<vmime::net::folder> folder = _client->getFolder();
     int count = folder->getMessageCount();
 
-    // Pobieramy ostatnie 30 wiadomości
     _messages = folder->getMessages(vmime::net::messageSet::byNumber(std::max(1, count - 35), count));
 
-    // Kluczowe: pobranie atrybutów ENVELOPE (nagłówki) i FLAGS (np. przeczytana/nieprzeczytana)
     folder->fetchMessages(_messages, vmime::net::fetchAttributes::FLAGS | vmime::net::fetchAttributes::ENVELOPE);
 
     for (unsigned int i = 0; i < _messages.size(); ++i)
@@ -52,13 +53,9 @@ void RepositoryEmail::envelopeEmailsSlot()
                         auto mailbox = vmime::dynamicCast<const vmime::mailbox>(addr);
 
                         if (mailbox) {
-                            // Pobieramy nazwę jako obiekt vmime::text
                             const vmime::text& nameText = mailbox->getName();
-                            // getConvertedText automatycznie zajmuje się dekodowaniem RFC 2047
                             QString decodedName = QString::fromStdString(nameText.getConvertedText(vmime::charsets::UTF_8));
-
                             QString email = QString::fromStdString(mailbox->getEmail().generate());
-
                             if (!decodedName.isEmpty()) {
                                 formattedList << QString("%1 <%2>").arg(decodedName, email);
                             } else {
@@ -72,7 +69,6 @@ void RepositoryEmail::envelopeEmailsSlot()
                 }
             } catch (...) {}
 
-            // Poprawiony fallback: Tworzymy obiekt text z surowego stringa, co wymusza parsing
             try {
                 vmime::text t;
                 t.parse(field->getValue()->generate());
@@ -108,17 +104,106 @@ void RepositoryEmail::envelopeEmailsSlot()
             }
         }
 
-        // qDebug() << "UID:" << uid;
-        // qDebug() << "Subject:" << subject;
-        // qDebug() << "From:" << from;
-        // qDebug() << "To:" << to;
-        // qDebug() << "Date:" << convertedDate;
-        // qDebug() << "Message-ID:" << messageId;
-        // qDebug() << "------------------------------------";
-
-        Email email(uid, convertedDate, subject, from, sender, replyTo, to, cc, bcc, inReplyTo, messageId);
+        Email email(uid.trimmed(), convertedDate.trimmed(), subject.trimmed(), from.trimmed(), sender.trimmed(), replyTo.trimmed(), to.trimmed(), cc.trimmed(), bcc.trimmed(), inReplyTo.trimmed(), messageId.trimmed());
         envelopedEmails.push_back(email);
     }
 
     emit emailsEnvelopedReady(envelopedEmails);
+}
+
+
+void RepositoryEmail::fetchBody(QString uid)
+{
+    _parts.clear();
+    auto folder = _client->getFolder();
+    vmime::string casted_uid = uid.toStdString();
+    std::vector<vmime::shared_ptr<vmime::net::message>> messages = folder->getMessages(vmime::net::messageSet::byUID(casted_uid));
+    vmime::shared_ptr<vmime::net::message> msg = messages.back();
+    vmime::utility::outputStreamAdapter out(std::cout);
+
+    folder->fetchMessage(msg, vmime::net::fetchAttributes::STRUCTURE);
+
+    vmime::shared_ptr<const vmime::net::messageStructure> structPtr = msg->getStructure();
+
+    explorePart(structPtr->getPartAt(0), 0);
+
+    // qDebug() << _parts.size();
+    // for(auto& p : _parts) qDebug() << p.type << ", " << p.subtype << ", " << p.ident;
+
+    BodyStructure root = _parts.front();
+
+
+    if(root.type == vmime::mediaTypes::MULTIPART)
+    {
+
+        if(root.subtype == vmime::mediaTypes::MULTIPART_ALTERNATIVE)
+        {
+            analyzeMultiPartAlternative(msg);
+        }
+        else if(root.subtype == vmime::mediaTypes::MULTIPART_MIXED)
+        {
+            qDebug() << "multipart/mixed";
+        }
+        else if(root.subtype == vmime::mediaTypes::MULTIPART_RELATED)
+        {
+            qDebug() << "multiupart/related";
+        }
+    }
+
+}
+
+void RepositoryEmail::explorePart(vmime::shared_ptr<const vmime::net::messagePart> part, int level = 0)
+{
+    BodyStructure bs;
+    vmime::mediaType mt = part->getType();
+
+    bs.type = mt.getType();
+    bs.subtype = mt.getSubType();
+    bs.size = part->getSize();
+    bs.ident = level;
+
+    qDebug() << bs.type << ", " << bs.subtype << ", " << bs.size << ", " << bs.ident;
+
+    _parts.push_back(bs);
+
+    for(int i = 0; i < part->getPartCount(); ++i)
+    {
+        _parts.back().child_index = i;
+        explorePart(part->getPartAt(i), level + 1);
+    }
+}
+
+
+void RepositoryEmail::analyzeMultiPartAlternative(vmime::shared_ptr<vmime::net::message> msg)
+{
+
+    for(auto& p : _parts)
+    {
+        if(p.subtype == vmime::mediaTypes::TEXT_HTML)
+        {
+            auto valid_part = msg->getStructure()->getPartAt(0)->getPartAt(p.child_index);
+            std::stringstream ss;
+            vmime::utility::outputStreamAdapter out(ss);
+            msg->extractPart(valid_part, out);
+
+            std::string raw = ss.str();
+            size_t bodyStart = raw.find("\r\n\r\n");
+            if(bodyStart == std::string::npos)
+                bodyStart = raw.find("\n\n");
+
+            std::string body = raw.substr(bodyStart + 4);
+
+            auto registeredEncoder = vmime::utility::encoder::encoderFactory::getInstance()->getEncoderByName("quoted-printable");
+            auto encoder = registeredEncoder->create();
+
+            vmime::utility::inputStreamStringAdapter in(body);
+            std::ostringstream decoded;
+            vmime::utility::outputStreamAdapter outDecoded(decoded);
+            encoder->decode(in, outDecoded);
+
+            QString html = QString::fromUtf8(decoded.str().c_str());
+            emit htmlReady(html);
+        }
+    }
+
 }

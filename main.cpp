@@ -1,6 +1,5 @@
 #pragma once
 #include "Service/service.h"
-#include "Model/email.h"
 #include "Repository/repositoryemail.h"
 #include "View/emailmodel.h"
 #include <QApplication>
@@ -23,6 +22,8 @@ int main(int argc, char *argv[])
 
     QObject::connect(repository, &RepositoryEmail::emailsEnvelopedReady, service, &Service::onEmailsEnvelope);
     QObject::connect(service, &Service::requestEnvelopedEmails,repository, &RepositoryEmail::envelopeEmailsSlot);
+    QObject::connect(service, &Service::requestBody, repository, &RepositoryEmail::fetchBody);
+    QObject::connect(repository, &RepositoryEmail::htmlReady, service, &Service::onHtmlReady);
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("emailModel", emailModel);
