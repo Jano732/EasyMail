@@ -15,7 +15,8 @@ int main(int argc, char *argv[])
     QtWebEngineQuick::initialize();
     QApplication a(argc, argv);
 
-    auto *client = new ImapClient("imap.poczta.onet.pl", 993, "poniatowski@op.pl", "password");
+    auto *client = new ImapClient("imap.poczta.onet.pl", 993, "poniatowski@op.pl", "XRAB-ELTQ-ECU1-T0M5");
+    // auto *client = new ImapClient("imap.gmail.com", 993, "jan.poniatowski2003@gmail.com", "tzirxihayzdtxozy");
     auto *repository = new RepositoryEmail(client);
     auto *emailModel = new EmailModel();
     auto *service = new Service(repository, emailModel);

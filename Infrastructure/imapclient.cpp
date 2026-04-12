@@ -47,8 +47,6 @@ void ImapClient::connect()
         // _store->setTracerFactory(vmime::make_shared <tracerFactory>());
         // verify();
 
-
-
         _store->setCertificateVerifier(vmime::make_shared<TrustAllVerifier>());
 
         _store->connect();

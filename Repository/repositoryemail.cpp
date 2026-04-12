@@ -4,9 +4,9 @@
 #include "vmime/text.hpp"
 #include "vmime/utility/inputStreamStringAdapter.hpp"
 #include "vmime/utility/outputStreamAdapter.hpp"
+#include "vmime/utility/encoder/encoderFactory.hpp"
 #include <qregularexpression.h>
 #include <qtconcurrentrun.h>
-#include "vmime/utility/encoder/encoderFactory.hpp"
 #ifdef _WIN32
 #include <winsock2.h>
 #endif
@@ -124,40 +124,27 @@ void RepositoryEmail::fetchBody(QString uid)
     vmime::string casted_uid = uid.toStdString();
     std::vector<vmime::shared_ptr<vmime::net::message>> messages = folder->getMessages(vmime::net::messageSet::byUID(casted_uid));
     vmime::shared_ptr<vmime::net::message> msg = messages.back();
-    vmime::utility::outputStreamAdapter out(std::cout);
 
     folder->fetchMessage(msg, vmime::net::fetchAttributes::STRUCTURE);
 
     vmime::shared_ptr<const vmime::net::messageStructure> structPtr = msg->getStructure();
-
-    explorePart(structPtr->getPartAt(0), 0, 0);
-
-    // qDebug() << _parts.size();
-    // for(auto& p : _parts) qDebug() << p.type << ", " << p.subtype << ", " << p.ident;
+    explorePart(structPtr->getPartAt(0), 0, 0, {});
 
     BodyStructure root = _parts.front();
 
-
-    if(root.type == vmime::mediaTypes::MULTIPART)
+    if (root.type == vmime::mediaTypes::MULTIPART)
     {
-
-        if(root.subtype == vmime::mediaTypes::MULTIPART_ALTERNATIVE)
-        {
+        if (root.subtype == vmime::mediaTypes::MULTIPART_ALTERNATIVE)
             analyzeMultiPartAlternative(msg);
-        }
-        else if(root.subtype == vmime::mediaTypes::MULTIPART_MIXED)
-        {
-            qDebug() << "multipart/mixed";
-        }
-        else if(root.subtype == vmime::mediaTypes::MULTIPART_RELATED)
-        {
-            qDebug() << "multiupart/related";
-        }
+        else if (root.subtype == vmime::mediaTypes::MULTIPART_MIXED)
+            analyzeMultiPartMixed(msg);
+        else if (root.subtype == vmime::mediaTypes::MULTIPART_RELATED)
+            qDebug() << "multipart/related";
     }
-
 }
 
-void RepositoryEmail::explorePart(vmime::shared_ptr<const vmime::net::messagePart> part, int level = 0, int index = 0)
+
+void RepositoryEmail::explorePart(vmime::shared_ptr<const vmime::net::messagePart> part, int level, int index, std::vector<int> parentPath)
 {
     BodyStructure bs;
     vmime::mediaType mt = part->getType();
@@ -167,52 +154,162 @@ void RepositoryEmail::explorePart(vmime::shared_ptr<const vmime::net::messagePar
     bs.size = part->getSize();
     bs.ident = level;
     bs.child_index = index;
+    bs.path = parentPath;
+    bs.path.push_back(index);
 
-    qDebug() << bs.type << ", " << bs.subtype << ", " << bs.size << ", " << bs.ident;
+    qDebug() << QString::fromStdString(bs.type)<< ", " << QString::fromStdString(bs.subtype) << ", " << bs.size << ", level:" << bs.ident;
 
     _parts.push_back(bs);
 
-    for(int i = 0; i < part->getPartCount(); ++i)
-    {
-        explorePart(part->getPartAt(i), level + 1, i);
+    for (int i = 0; i < part->getPartCount(); ++i)
+        explorePart(part->getPartAt(i), level + 1, i, bs.path);
+}
+
+
+vmime::shared_ptr<const vmime::net::messagePart> RepositoryEmail::getPartByPath(vmime::shared_ptr<vmime::net::message> msg,const std::vector<int>& path)
+{
+    auto current = msg->getStructure()->getPartAt(0);
+    for (size_t i = 1; i < path.size(); ++i)
+        current = current->getPartAt(path[i]);
+    return current;
+}
+
+
+std::string RepositoryEmail::extractRawPart(vmime::shared_ptr<vmime::net::message> msg, const BodyStructure& bs)
+{
+    auto part = getPartByPath(msg, bs.path);
+    std::stringstream ss;
+    vmime::utility::outputStreamAdapter out(ss);
+    msg->extractPart(part, out);
+    return ss.str();
+}
+
+
+QString RepositoryEmail::decodePartContent(const std::string& raw, const std::string& encoding)
+{
+    size_t bodyStart = raw.find("\r\n\r\n");
+    if (bodyStart == std::string::npos)
+        bodyStart = raw.find("\n\n");
+    if (bodyStart == std::string::npos)
+        return QString::fromUtf8(raw.c_str());
+
+    std::string body = raw.substr(bodyStart + 4);
+
+    try {
+        auto encoder = vmime::utility::encoder::encoderFactory::getInstance()->getEncoderByName(encoding)->create();
+        vmime::utility::inputStreamStringAdapter in(body);
+        std::ostringstream decoded;
+        vmime::utility::outputStreamAdapter outDecoded(decoded);
+        encoder->decode(in, outDecoded);
+        return QString::fromUtf8(decoded.str().c_str());
+    } catch (...) {
+        return QString::fromUtf8(body.c_str());
     }
+}
+
+
+QByteArray RepositoryEmail::extractAttachment(vmime::shared_ptr<vmime::net::message> msg, const BodyStructure& bs)
+{
+    std::string raw = extractRawPart(msg, bs);
+
+    size_t bodyStart = raw.find("\r\n\r\n");
+    if (bodyStart == std::string::npos)
+        bodyStart = raw.find("\n\n");
+    if (bodyStart == std::string::npos)
+        return QByteArray(raw.c_str(), raw.size());
+
+    std::string body = raw.substr(bodyStart + 4);
+
+    try {
+        auto encoder = vmime::utility::encoder::encoderFactory::getInstance()->getEncoderByName("base64")->create();
+        vmime::utility::inputStreamStringAdapter in(body);
+        std::ostringstream decoded;
+        vmime::utility::outputStreamAdapter outDecoded(decoded);
+        encoder->decode(in, outDecoded);
+        const std::string& s = decoded.str();
+        return QByteArray(s.c_str(), s.size());
+    } catch (...) {
+        return QByteArray(body.c_str(), body.size());
+    }
+}
+
+
+QString RepositoryEmail::resolveAttachmentFilename(const std::string& raw, const BodyStructure& bs)
+{
+    QString qraw = QString::fromStdString(raw);
+
+    QRegularExpression reDisp(R"(filename[*]?=["']?([^"'\r\n;]+)["']?)", QRegularExpression::CaseInsensitiveOption);
+    auto match = reDisp.match(qraw);
+    if (match.hasMatch())
+        return match.captured(1).trimmed();
+
+    QRegularExpression reName(R"(name=["']?([^"'\r\n;]+)["']?)", QRegularExpression::CaseInsensitiveOption);
+    match = reName.match(qraw);
+    if (match.hasMatch())
+        return match.captured(1).trimmed();
+
+    return QString("attachment_%1_%2").arg(QString::fromStdString(bs.type)).arg(QString::fromStdString(bs.subtype));
 }
 
 
 void RepositoryEmail::analyzeMultiPartAlternative(vmime::shared_ptr<vmime::net::message> msg)
 {
-
-    for(auto& p : _parts)
+    for (auto& p : _parts)
     {
-        if(p.subtype == vmime::mediaTypes::TEXT_HTML)
+        if (p.subtype == vmime::mediaTypes::TEXT_HTML)
         {
-            try{
-                auto valid_part = msg->getStructure()->getPartAt(0)->getPartAt(p.child_index);
-                std::stringstream ss;
-                vmime::utility::outputStreamAdapter out(ss);
-                msg->extractPart(valid_part, out);
-
-                std::string raw = ss.str();
-                size_t bodyStart = raw.find("\r\n\r\n");
-                if(bodyStart == std::string::npos)
-                    bodyStart = raw.find("\n\n");
-
-                std::string body = raw.substr(bodyStart + 4);
-
-                auto registeredEncoder = vmime::utility::encoder::encoderFactory::getInstance()->getEncoderByName("quoted-printable");
-                auto encoder = registeredEncoder->create();
-
-                vmime::utility::inputStreamStringAdapter in(body);
-                std::ostringstream decoded;
-                vmime::utility::outputStreamAdapter outDecoded(decoded);
-                encoder->decode(in, outDecoded);
-
-                QString html = QString::fromUtf8(decoded.str().c_str());
+            try {
+                std::string raw = extractRawPart(msg, p);
+                QString html = decodePartContent(raw, "quoted-printable");
                 emit htmlReady(html);
             } catch(vmime::exception& e){
                 std::cerr << e.what();
             }
         }
     }
+}
 
+
+void RepositoryEmail::analyzeMultiPartMixed(vmime::shared_ptr<vmime::net::message> msg)
+{
+    QString htmlContent;
+    QString plainContent;
+    QList<Attachment> attachments;
+
+    for (auto& p : _parts)
+    {
+        if (p.type == vmime::mediaTypes::MULTIPART)
+            continue;
+
+        if (p.subtype == vmime::mediaTypes::TEXT_HTML)
+        {
+            std::string raw = extractRawPart(msg, p);
+            htmlContent = decodePartContent(raw, "quoted-printable");
+            continue;
+        }
+
+        if (p.subtype == vmime::mediaTypes::TEXT_PLAIN)
+        {
+            std::string raw = extractRawPart(msg, p);
+            plainContent = decodePartContent(raw, "quoted-printable");
+            continue;
+        }
+
+        Attachment att;
+        att.mimeType = QString::fromStdString(p.type) + "/" + QString::fromStdString(p.subtype);
+        att.data = extractAttachment(msg, p);
+        std::string raw = extractRawPart(msg, p);
+        att.filename = resolveAttachmentFilename(raw, p);
+        attachments.append(att);
+
+        qDebug() << "Attachment:" << att.filename << "| type:" << att.mimeType << "| size:" << att.data.size() << "B";
+    }
+
+    if (!htmlContent.isEmpty())
+        emit htmlReady(htmlContent);
+    else if (!plainContent.isEmpty())
+        emit htmlReady("<pre>" + plainContent + "</pre>");
+
+    if (!attachments.isEmpty())
+        emit attachmentsReady(attachments);
 }
