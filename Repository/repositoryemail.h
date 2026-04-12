@@ -24,7 +24,7 @@ class RepositoryEmail : public QObject
     std::vector<BodyStructure> _parts;
     std::vector<vmime::shared_ptr<vmime::net::message>> _messages;
 
-    void explorePart(vmime::shared_ptr<const vmime::net::messagePart>, int);
+    void explorePart(vmime::shared_ptr<const vmime::net::messagePart>, int, int);
     void analyzeMultiPartAlternative(vmime::shared_ptr<vmime::net::message>);
 
 public:

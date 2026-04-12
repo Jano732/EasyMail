@@ -61,7 +61,10 @@ void ImapClient::connect()
 
 void ImapClient::verify()
 {
-    QString cert_path = "/Users/janponiatowski/Desktop/Projekty/INZYNIERKA/EasyMail/Resources/cacert.pem";
+    // QString cert_path = "/Users/janponiatowski/Desktop/Projekty/INZYNIERKA/EasyMail/Resources/cacert.pem";
+    // QString cert_path = "D:\\Projekty\\INZYNIERKA\EasyMail\\Resources\\cacert.pem";
+    QString cert_path = QCoreApplication::applicationDirPath() + "/Resources/cacert.pem";
+    qDebug() << "Szukam cert w:" << QCoreApplication::applicationDirPath();
 
     std::ifstream certFile(cert_path.toStdString(), std::ios::in | std::ios::binary);
     if(!certFile)

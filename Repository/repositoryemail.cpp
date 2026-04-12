@@ -7,6 +7,11 @@
 #include <qregularexpression.h>
 #include <qtconcurrentrun.h>
 #include "vmime/utility/encoder/encoderFactory.hpp"
+#ifdef _WIN32
+#include <winsock2.h>
+#endif
+
+
 
 RepositoryEmail::RepositoryEmail(ImapClient *client, QObject *parent)
     : QObject(parent)
@@ -125,7 +130,7 @@ void RepositoryEmail::fetchBody(QString uid)
 
     vmime::shared_ptr<const vmime::net::messageStructure> structPtr = msg->getStructure();
 
-    explorePart(structPtr->getPartAt(0), 0);
+    explorePart(structPtr->getPartAt(0), 0, 0);
 
     // qDebug() << _parts.size();
     // for(auto& p : _parts) qDebug() << p.type << ", " << p.subtype << ", " << p.ident;
@@ -152,7 +157,7 @@ void RepositoryEmail::fetchBody(QString uid)
 
 }
 
-void RepositoryEmail::explorePart(vmime::shared_ptr<const vmime::net::messagePart> part, int level = 0)
+void RepositoryEmail::explorePart(vmime::shared_ptr<const vmime::net::messagePart> part, int level = 0, int index = 0)
 {
     BodyStructure bs;
     vmime::mediaType mt = part->getType();
@@ -161,6 +166,7 @@ void RepositoryEmail::explorePart(vmime::shared_ptr<const vmime::net::messagePar
     bs.subtype = mt.getSubType();
     bs.size = part->getSize();
     bs.ident = level;
+    bs.child_index = index;
 
     qDebug() << bs.type << ", " << bs.subtype << ", " << bs.size << ", " << bs.ident;
 
@@ -168,8 +174,7 @@ void RepositoryEmail::explorePart(vmime::shared_ptr<const vmime::net::messagePar
 
     for(int i = 0; i < part->getPartCount(); ++i)
     {
-        _parts.back().child_index = i;
-        explorePart(part->getPartAt(i), level + 1);
+        explorePart(part->getPartAt(i), level + 1, i);
     }
 }
 
@@ -181,28 +186,32 @@ void RepositoryEmail::analyzeMultiPartAlternative(vmime::shared_ptr<vmime::net::
     {
         if(p.subtype == vmime::mediaTypes::TEXT_HTML)
         {
-            auto valid_part = msg->getStructure()->getPartAt(0)->getPartAt(p.child_index);
-            std::stringstream ss;
-            vmime::utility::outputStreamAdapter out(ss);
-            msg->extractPart(valid_part, out);
+            try{
+                auto valid_part = msg->getStructure()->getPartAt(0)->getPartAt(p.child_index);
+                std::stringstream ss;
+                vmime::utility::outputStreamAdapter out(ss);
+                msg->extractPart(valid_part, out);
 
-            std::string raw = ss.str();
-            size_t bodyStart = raw.find("\r\n\r\n");
-            if(bodyStart == std::string::npos)
-                bodyStart = raw.find("\n\n");
+                std::string raw = ss.str();
+                size_t bodyStart = raw.find("\r\n\r\n");
+                if(bodyStart == std::string::npos)
+                    bodyStart = raw.find("\n\n");
 
-            std::string body = raw.substr(bodyStart + 4);
+                std::string body = raw.substr(bodyStart + 4);
 
-            auto registeredEncoder = vmime::utility::encoder::encoderFactory::getInstance()->getEncoderByName("quoted-printable");
-            auto encoder = registeredEncoder->create();
+                auto registeredEncoder = vmime::utility::encoder::encoderFactory::getInstance()->getEncoderByName("quoted-printable");
+                auto encoder = registeredEncoder->create();
 
-            vmime::utility::inputStreamStringAdapter in(body);
-            std::ostringstream decoded;
-            vmime::utility::outputStreamAdapter outDecoded(decoded);
-            encoder->decode(in, outDecoded);
+                vmime::utility::inputStreamStringAdapter in(body);
+                std::ostringstream decoded;
+                vmime::utility::outputStreamAdapter outDecoded(decoded);
+                encoder->decode(in, outDecoded);
 
-            QString html = QString::fromUtf8(decoded.str().c_str());
-            emit htmlReady(html);
+                QString html = QString::fromUtf8(decoded.str().c_str());
+                emit htmlReady(html);
+            } catch(vmime::exception& e){
+                std::cerr << e.what();
+            }
         }
     }
 

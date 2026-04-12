@@ -25,6 +25,9 @@ if(WIN32)
     set(VMIME_ROOT "C:/vmime/install")
     set(CURL_INCLUDE_DIR "C:/msys64/mingw64/include")
     set(CURL_LIBRARY "C:/msys64/mingw64/lib/libcurl.dll.a")
+    set(OPENSSL_ROOT_DIR "C:/Program Files/OpenSSL-Win64")
+
+    add_definitions(-DNOMINMAX)
 
     find_library(VMIME_LIB
         NAMES vmime
@@ -32,6 +35,7 @@ if(WIN32)
         REQUIRED
     )
     set(VMIME_INCLUDE_DIR "${VMIME_ROOT}/include")
+    find_package(OpenSSL REQUIRED)
 
 elseif(APPLE)
     # ── macOS (Homebrew M2) ───────────────────────────────────
@@ -130,6 +134,8 @@ target_link_libraries(EasyMail
         Qt6::Quick
         Qt6::Qml
         Qt6::WebEngineQuick
+        $<$<PLATFORM_ID:Windows>:OpenSSL::SSL>
+        $<$<PLATFORM_ID:Windows>:OpenSSL::Crypto>
 
         # Biblioteki systemowe tylko na Windows
         $<$<PLATFORM_ID:Windows>:Ws2_32>
