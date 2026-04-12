@@ -26,6 +26,12 @@ ImapClient::ImapClient(const QString url, const int port, const QString log, con
     // qDebug("FIN");
 }
 
+class TrustAllVerifier : public vmime::security::cert::certificateVerifier
+{
+public:
+    void verify(const vmime::shared_ptr<vmime::security::cert::certificateChain>& chain,
+                const vmime::string& hostname) override {}
+};
 
 void ImapClient::connect()
 {
@@ -34,10 +40,17 @@ void ImapClient::connect()
         QString connection_string = "imaps://" + _login + ":" + _password + "@" + _url;
         vmime::utility::url url(connection_string.toStdString());
 
+        qDebug() << "Url: " << connection_string;
+
         _session = vmime::net::session::create();
         _store = _session->getStore(url);
         // _store->setTracerFactory(vmime::make_shared <tracerFactory>());
-        verify();
+        // verify();
+
+
+
+        _store->setCertificateVerifier(vmime::make_shared<TrustAllVerifier>());
+
         _store->connect();
 
         if(_store->isConnected())
@@ -50,6 +63,7 @@ void ImapClient::connect()
     catch(vmime::exception& e)
     {
         qDebug() << "Vmime exception - ImapClient::connect(): " << e.what();
+
     }
 
     catch (...)
@@ -109,7 +123,9 @@ void ImapClient::verify()
         vmime::make_shared<vmime::security::cert::defaultCertificateVerifier>();
 
     vrf->setX509RootCAs(rootCAs);
+    vrf->setX509TrustedCerts(rootCAs);
     _store->setCertificateVerifier(vrf);
+
 }
 
 void ImapClient::selectDefaultFolder()
