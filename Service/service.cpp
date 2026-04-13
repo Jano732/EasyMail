@@ -1,13 +1,15 @@
 #include "service.h"
+#include "QtCore/qdir.h"
+#include "QtCore/qurl.h"
 #include <qfuture.h>
 #include <qtconcurrentrun.h>
+#include <QDesktopServices>
 
-Service::Service(RepositoryEmail *repo, EmailModel* emailmodel, QObject* parent)
+Service::Service(RepositoryEmail *repo, EmailModel* emailmodel, AttachmentModel* attmodel, QObject* parent)
     : QObject(parent)
     , _repo(repo)
     , _email_model(emailmodel)
-    , _htmlReceived(false)
-    , _attachmentsReceived(false)
+    , _attachment_model(attmodel)
 {}
 
 void Service::onEmailsEnvelope(std::vector<Email>& emails)
@@ -51,8 +53,8 @@ void Service::onHtmlReady(QString html)
 void Service::onAttachmentsReady(QList<RepositoryEmail::Attachment> attachments)
 {
     _pendingAttachments = attachments;
-    _attachmentsReceived = true;
-    tryEmitBody();
+    _attachment_model->setAttachments(_pendingAttachments);
+
 }
 
 void Service::tryEmitBody()
@@ -81,5 +83,25 @@ void Service::tryEmitBody()
         emit attachmentsReady(_pendingAttachments);
         _htmlReceived = false;
         _attachmentsReceived = false;
+    }
+}
+
+
+void Service::openAttachment(int index)
+{
+    const auto& att = _attachment_model->getAttachment(index);
+
+    QString tempPath = QDir::tempPath() + "/" + att.filename;
+    QFile file(tempPath);
+
+    if (file.open(QIODevice::WriteOnly))
+    {
+        file.write(att.data);
+        file.close();
+        QDesktopServices::openUrl(QUrl::fromLocalFile(tempPath));
+    }
+    else
+    {
+        qDebug() << "Nie można zapisać pliku tymczasowego:" << tempPath;
     }
 }

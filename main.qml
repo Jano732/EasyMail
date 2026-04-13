@@ -17,6 +17,9 @@ ApplicationWindow {
         function onHtmlReady(html){
             emailWebView.loadHtml(html)
         }
+        function onAttachmentsReady(){
+            attachmentList.visible = attachmentModel.count > 0
+        }
     }
 
     ColumnLayout{
@@ -122,8 +125,49 @@ ApplicationWindow {
 
                 WebEngineView {
                     id: emailWebView
-                    anchors.fill: parent
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    height: attachmentList.y > 0 ? attachmentList.y - 8 : parent.height
+                }
 
+                ListView {
+                    id: attachmentList
+                    anchors.bottom: parent.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    height: count > 0 ? contentHeight : 0
+                    model: attachmentModel
+
+                    delegate: Rectangle {
+                        width: parent.width
+                        height: 48
+                        color: "#f5f5f5"
+                        radius: 6
+
+                        Row {
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.left: parent.left
+                            anchors.leftMargin: 12
+                            spacing: 10
+
+                            Text {
+                                text: model.filename
+                                font.pixelSize: 14
+                            }
+
+                            Text {
+                                text: model.mimeType
+                                font.pixelSize: 12
+                                color: "#888"
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: service.openAttachment(model.index)
+                        }
+                    }
                 }
             }
         }
