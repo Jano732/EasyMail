@@ -132,6 +132,8 @@ void RepositoryEmail::fetchBody(QString uid)
 
     BodyStructure root = _parts.front();
 
+    qDebug() << "TYPE: " << root.type;
+
     if (root.type == vmime::mediaTypes::MULTIPART)
     {
         if (root.subtype == vmime::mediaTypes::MULTIPART_ALTERNATIVE)
@@ -140,6 +142,10 @@ void RepositoryEmail::fetchBody(QString uid)
             analyzeMultiPartMixed(msg);
         else if (root.subtype == vmime::mediaTypes::MULTIPART_RELATED)
             qDebug() << "multipart/related";
+    }
+    else
+    {
+        analyzeSinglePart(msg, root);
     }
 }
 
@@ -194,6 +200,9 @@ QString RepositoryEmail::decodePartContent(const std::string& raw, const std::st
         return QString::fromUtf8(raw.c_str());
 
     std::string body = raw.substr(bodyStart + 4);
+
+    if (body.find_first_not_of(" \r\n\t") == std::string::npos)
+        return QString::fromUtf8(raw.c_str());
 
     try {
         auto encoder = vmime::utility::encoder::encoderFactory::getInstance()->getEncoderByName(encoding)->create();
@@ -260,7 +269,9 @@ void RepositoryEmail::analyzeMultiPartAlternative(vmime::shared_ptr<vmime::net::
         {
             try {
                 std::string raw = extractRawPart(msg, p);
+                // qDebug() << "RAW \n\n" << raw;
                 QString html = decodePartContent(raw, "quoted-printable");
+                qDebug() << "HTML \n\n" << html;
                 emit htmlReady(html);
             } catch(vmime::exception& e){
                 std::cerr << e.what();
@@ -312,4 +323,79 @@ void RepositoryEmail::analyzeMultiPartMixed(vmime::shared_ptr<vmime::net::messag
 
     if (!attachments.isEmpty())
         emit attachmentsReady(attachments);
+}
+
+
+void RepositoryEmail::analyzeSinglePart(vmime::shared_ptr<vmime::net::message> msg, BodyStructure& bs)
+{
+    std::string raw = extractRawPart(msg, bs);
+    QString qraw = QString::fromStdString(raw);
+    size_t bodyStart = std::string::npos;
+    size_t searchPos = 0;
+
+    while (searchPos < raw.size())
+    {
+        size_t found = raw.find("\r\n\r\n", searchPos);
+        if (found == std::string::npos) break;
+
+        size_t afterSep = found + 4;
+        if (afterSep < raw.size() && raw[afterSep] != ' ' && raw[afterSep] != '\t')
+        {
+            bodyStart = found;
+            break;
+        }
+        searchPos = found + 1;
+    }
+
+    if (bodyStart == std::string::npos)
+    {
+        emit htmlReady(QString::fromUtf8(raw.c_str()));
+        return;
+    }
+
+    std::string body = raw.substr(bodyStart + 4);
+
+    std::string encoding = "7bit";
+    QRegularExpression reEnc(R"(Content-Transfer-Encoding:\s*(\S+))", QRegularExpression::CaseInsensitiveOption);
+    auto match = reEnc.match(qraw);
+    if (match.hasMatch())
+        encoding = match.captured(1).trimmed().toLower().toStdString();
+
+    QString content;
+
+    if (encoding == "quoted-printable")
+    {
+        try {
+            auto encoder = vmime::utility::encoder::encoderFactory::getInstance()->getEncoderByName("quoted-printable")->create();
+            vmime::utility::inputStreamStringAdapter in(body);
+            std::ostringstream decoded;
+            vmime::utility::outputStreamAdapter outDecoded(decoded);
+            encoder->decode(in, outDecoded);
+            content = QString::fromUtf8(decoded.str().c_str());
+        } catch (...) {
+            content = QString::fromUtf8(body.c_str());
+        }
+    }
+    else if (encoding == "base64")
+    {
+        try {
+            auto encoder = vmime::utility::encoder::encoderFactory::getInstance()->getEncoderByName("base64")->create();
+            vmime::utility::inputStreamStringAdapter in(body);
+            std::ostringstream decoded;
+            vmime::utility::outputStreamAdapter outDecoded(decoded);
+            encoder->decode(in, outDecoded);
+            content = QString::fromUtf8(decoded.str().c_str());
+        } catch (...) {
+            content = QString::fromUtf8(body.c_str());
+        }
+    }
+    else
+    {
+        content = QString::fromUtf8(body.c_str());
+    }
+
+    if (bs.subtype == vmime::mediaTypes::TEXT_HTML)
+        emit htmlReady(content);
+    else if (bs.subtype == vmime::mediaTypes::TEXT_PLAIN)
+        emit htmlReady("<pre>" + content + "</pre>");
 }

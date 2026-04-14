@@ -1,4 +1,5 @@
 #pragma once
+#include "QtCore/qtimer.h"
 #include "View/attachmentmodel.h"
 #ifndef SERVICE_H
 #define SERVICE_H
@@ -22,6 +23,7 @@ class Service : public QObject
     QList<RepositoryEmail::Attachment> _pendingAttachments;
     bool _htmlReceived;
     bool _attachmentsReceived;
+    QTimer *_bodyTimer;
 
     void tryEmitBody();
 

@@ -54,19 +54,12 @@ void Service::onAttachmentsReady(QList<RepositoryEmail::Attachment> attachments)
 {
     _pendingAttachments = attachments;
     _attachment_model->setAttachments(_pendingAttachments);
-
 }
 
 void Service::tryEmitBody()
 {
-    // multipart/alternative i plain emitują tylko htmlReady bez załączników —
-    // w takim razie attachmentsReady nigdy nie przyjdzie, więc emitujemy od razu
     if (_htmlReceived && !_attachmentsReceived)
     {
-        // Dajemy chwilę — jeśli repo nie wyemituje attachmentsReady,
-        // znaczy że ich nie ma (alternative / plain)
-        // Używamy flagi: repo zawsze emituje attachmentsReady gdy są załączniki,
-        // więc jeśli html przyszedł pierwszy — czekamy jeszcze jedną rundę event loop
         QMetaObject::invokeMethod(this, [this]() {
             if (!_attachmentsReceived)
             {
