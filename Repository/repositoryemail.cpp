@@ -132,8 +132,6 @@ void RepositoryEmail::fetchBody(QString uid)
 
     BodyStructure root = _parts.front();
 
-    qDebug() << "TYPE: " << root.type;
-
     if (root.type == vmime::mediaTypes::MULTIPART)
     {
         if (root.subtype == vmime::mediaTypes::MULTIPART_ALTERNATIVE)
@@ -141,7 +139,7 @@ void RepositoryEmail::fetchBody(QString uid)
         else if (root.subtype == vmime::mediaTypes::MULTIPART_MIXED)
             analyzeMultiPartMixed(msg);
         else if (root.subtype == vmime::mediaTypes::MULTIPART_RELATED)
-            qDebug() << "multipart/related";
+            analyzeMultiPartRelated(msg);
     }
     else
     {
@@ -261,21 +259,63 @@ QString RepositoryEmail::resolveAttachmentFilename(const std::string& raw, const
 }
 
 
+QString RepositoryEmail::extractCid(const std::string& raw)
+{
+    QRegularExpression re(R"(Content-ID:\s*<([^>]+)>)", QRegularExpression::CaseInsensitiveOption);
+    auto match = re.match(QString::fromStdString(raw));
+    if (match.hasMatch())
+        return match.captured(1).trimmed();
+    return QString();
+}
+
+
+QString RepositoryEmail::resolveCidReferences(const QString& html, const QMap<QString, InlineResource>& resources)
+{
+    QString result = html;
+    for (auto it = resources.begin(); it != resources.end(); ++it)
+    {
+        QString dataUri = QString("data:%1;base64,%2").arg(it->mimeType).arg(QString(it->data.toBase64()));
+        result.replace("cid:" + it.key(), dataUri);
+    }
+    return result;
+}
+
+
+bool RepositoryEmail::isDirectChildOf(const BodyStructure& child, const BodyStructure& parent)
+{
+    if (child.path.size() != parent.path.size() + 1)
+        return false;
+    return std::equal(parent.path.begin(), parent.path.end(), child.path.begin());
+}
+
+
 void RepositoryEmail::analyzeMultiPartAlternative(vmime::shared_ptr<vmime::net::message> msg)
 {
+    BodyStructure root = _parts.front();
+
     for (auto& p : _parts)
     {
+        if (!isDirectChildOf(p, root))
+            continue;
+
+        if (p.type == vmime::mediaTypes::MULTIPART && p.subtype == vmime::mediaTypes::MULTIPART_MIXED)
+        {
+            analyzeMultiPartMixed(msg);
+            return;
+        }
+
         if (p.subtype == vmime::mediaTypes::TEXT_HTML)
         {
             try {
                 std::string raw = extractRawPart(msg, p);
                 // qDebug() << "RAW \n\n" << raw;
-                QString html = decodePartContent(raw, "quoted-printable");
+                QString html = decodePartContent(raw, detectEncoding(raw));
                 qDebug() << "HTML \n\n" << html;
                 emit htmlReady(html);
             } catch(vmime::exception& e){
                 std::cerr << e.what();
             }
+            return;
         }
     }
 }
@@ -295,14 +335,18 @@ void RepositoryEmail::analyzeMultiPartMixed(vmime::shared_ptr<vmime::net::messag
         if (p.subtype == vmime::mediaTypes::TEXT_HTML)
         {
             std::string raw = extractRawPart(msg, p);
-            htmlContent = decodePartContent(raw, "quoted-printable");
+
+            qDebug() << "RAW: " << raw << "\n\n ======== = = = = = ========\n\n";
+
+            htmlContent = decodePartContent(raw, detectEncoding(raw));
+            qDebug() << "HTML: " << htmlContent;
             continue;
         }
 
         if (p.subtype == vmime::mediaTypes::TEXT_PLAIN)
         {
             std::string raw = extractRawPart(msg, p);
-            plainContent = decodePartContent(raw, "quoted-printable");
+            plainContent = decodePartContent(raw, detectEncoding(raw));
             continue;
         }
 
@@ -323,6 +367,50 @@ void RepositoryEmail::analyzeMultiPartMixed(vmime::shared_ptr<vmime::net::messag
 
     if (!attachments.isEmpty())
         emit attachmentsReady(attachments);
+}
+
+
+void RepositoryEmail::analyzeMultiPartRelated(vmime::shared_ptr<vmime::net::message> msg)
+{
+    BodyStructure root = _parts.front();
+    QMap<QString, InlineResource> inlineResources;
+    QString htmlContent;
+    bool firstChild = true;
+
+    for (auto& p : _parts)
+    {
+        if (!isDirectChildOf(p, root))
+            continue;
+
+        if (firstChild)
+        {
+            std::string raw = extractRawPart(msg, p);
+            htmlContent = decodePartContent(raw, detectEncoding(raw));
+            firstChild = false;
+            continue;
+        }
+
+        std::string raw = extractRawPart(msg, p);
+        QString cid = extractCid(raw);
+        qDebug() << "CID: " << cid;
+
+        if (!cid.isEmpty())
+        {
+            InlineResource res;
+            res.mimeType = QString::fromStdString(p.type) + "/" + QString::fromStdString(p.subtype);
+            res.data = extractAttachment(msg, p);
+
+            qDebug() << res.mimeType;
+
+            inlineResources[cid] = res;
+        }
+    }
+
+    if (!htmlContent.isEmpty() && !inlineResources.isEmpty())
+        htmlContent = resolveCidReferences(htmlContent, inlineResources);
+
+    if (!htmlContent.isEmpty())
+        emit htmlReady(htmlContent);
 }
 
 
@@ -398,4 +486,13 @@ void RepositoryEmail::analyzeSinglePart(vmime::shared_ptr<vmime::net::message> m
         emit htmlReady(content);
     else if (bs.subtype == vmime::mediaTypes::TEXT_PLAIN)
         emit htmlReady("<pre>" + content + "</pre>");
+}
+
+std::string RepositoryEmail::detectEncoding(const std::string& raw)
+{
+    QRegularExpression reEnc(R"(Content-Transfer-Encoding:\s*(\S+))", QRegularExpression::CaseInsensitiveOption);
+    auto match = reEnc.match(QString::fromStdString(raw));
+    if (match.hasMatch())
+        return match.captured(1).trimmed().toLower().toStdString();
+    return "7bit";
 }

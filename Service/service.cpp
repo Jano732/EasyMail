@@ -47,6 +47,7 @@ void Service::onHtmlReady(QString html)
 {
     _pendingHtml = html;
     _htmlReceived = true;
+    qDebug() << "ATTACHMENTS COUNT: " << _pendingAttachments.size();
     tryEmitBody();
 }
 
@@ -86,6 +87,7 @@ void Service::openAttachment(int index)
 
     QString tempPath = QDir::tempPath() + "/" + att.filename;
     QFile file(tempPath);
+    qDebug() << "tempPath: " << tempPath;
 
     if (file.open(QIODevice::WriteOnly))
     {

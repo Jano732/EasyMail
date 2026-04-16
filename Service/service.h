@@ -50,6 +50,7 @@ public slots:
     void onEmailsEnvelope(std::vector<Email>&);
     void onHtmlReady(QString);
     void onAttachmentsReady(QList<RepositoryEmail::Attachment>);
+    // void onResetAttachments();
 
 };
 

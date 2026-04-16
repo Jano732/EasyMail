@@ -46,3 +46,11 @@ RepositoryEmail::Attachment AttachmentModel::getAttachment(int index) const
         return _attachments[index];
     return {};
 }
+
+
+Q_INVOKABLE void AttachmentModel::clear()
+{
+    beginResetModel();
+    _attachments.clear();
+    endResetModel();
+}

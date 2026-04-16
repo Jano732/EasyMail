@@ -7,6 +7,7 @@
 #include <QObject>
 #include <QByteArray>
 #include <QList>
+#include <QMap>
 
 
 class RepositoryEmail : public QObject
@@ -21,6 +22,11 @@ class RepositoryEmail : public QObject
         int child_index;
         size_t size;
         std::vector<int> path;
+    };
+
+    struct InlineResource {
+        QString mimeType;
+        QByteArray data;
     };
 
 public:
@@ -40,12 +46,17 @@ private:
     void explorePart(vmime::shared_ptr<const vmime::net::messagePart>, int, int, std::vector<int>);
     void analyzeMultiPartAlternative(vmime::shared_ptr<vmime::net::message>);
     void analyzeMultiPartMixed(vmime::shared_ptr<vmime::net::message>);
+    void analyzeMultiPartRelated(vmime::shared_ptr<vmime::net::message>);
 
     vmime::shared_ptr<const vmime::net::messagePart> getPartByPath(vmime::shared_ptr<vmime::net::message>, const std::vector<int>&);
     std::string extractRawPart(vmime::shared_ptr<vmime::net::message>, const BodyStructure&);
-    QString     decodePartContent(const std::string&, const std::string&);
-    QByteArray  extractAttachment(vmime::shared_ptr<vmime::net::message>, const BodyStructure&);
-    QString     resolveAttachmentFilename(const std::string&, const BodyStructure&);
+    QString decodePartContent(const std::string&, const std::string&);
+    QByteArray extractAttachment(vmime::shared_ptr<vmime::net::message>, const BodyStructure&);
+    QString resolveAttachmentFilename(const std::string&, const BodyStructure&);
+    QString extractCid(const std::string&);
+    QString resolveCidReferences(const QString&, const QMap<QString, InlineResource>&);
+    bool isDirectChildOf(const BodyStructure&, const BodyStructure&);
+    std::string detectEncoding(const std::string&);
 
 public:
 
@@ -63,6 +74,7 @@ signals:
     void emailsEnvelopedReady(std::vector<Email>& emails);
     void htmlReady(QString);
     void attachmentsReady(QList<RepositoryEmail::Attachment>);
+    void resetAttachments();
 
 };
 

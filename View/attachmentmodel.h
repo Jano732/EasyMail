@@ -22,6 +22,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     void setAttachments(const QList<RepositoryEmail::Attachment>& list);
+    Q_INVOKABLE void clear();
     RepositoryEmail::Attachment getAttachment(int index) const;
 };
 

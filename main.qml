@@ -68,6 +68,7 @@ ApplicationWindow {
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {
+                            attachmentModel.clear()
                             var email = service.getEmailByUid(model.uid)
                             service.requestBodyOfAnEmail(email)
                         }
