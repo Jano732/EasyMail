@@ -108,8 +108,12 @@ void RepositoryEmail::envelopeEmailsSlot()
                 convertedDate = QString::fromStdString(dateVal->generate());
             }
         }
+        bool isRead = false;
+        int flags = msg->getFlags();
+        isRead = ((flags & vmime::net::message::FLAG_SEEN) != 0);
+        qDebug() << flags;
 
-        Email email(uid.trimmed(), convertedDate.trimmed(), subject.trimmed(), from.trimmed(), sender.trimmed(), replyTo.trimmed(), to.trimmed(), cc.trimmed(), bcc.trimmed(), inReplyTo.trimmed(), messageId.trimmed());
+        Email email(uid.trimmed(), convertedDate.trimmed(), subject.trimmed(), from.trimmed(), sender.trimmed(), replyTo.trimmed(), to.trimmed(), cc.trimmed(), bcc.trimmed(), inReplyTo.trimmed(), messageId.trimmed(), isRead);
         envelopedEmails.push_back(email);
     }
 
@@ -121,8 +125,9 @@ void RepositoryEmail::fetchBody(QString uid)
 {
     _parts.clear();
     auto folder = _client->getFolder();
-    vmime::string casted_uid = uid.toStdString();
-    std::vector<vmime::shared_ptr<vmime::net::message>> messages = folder->getMessages(vmime::net::messageSet::byUID(casted_uid));
+    auto messages = _client->getMessageByUid(uid);
+    _client->markAsRead(uid);
+
     vmime::shared_ptr<vmime::net::message> msg = messages.back();
 
     folder->fetchMessage(msg, vmime::net::fetchAttributes::STRUCTURE);

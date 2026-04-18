@@ -14,7 +14,7 @@
 //     _smtp_url(url),
 //     _message(message) {qDebug() << _username << ", " << _password << ", " << _smtp_url << ", " << _message->getSubject();}
 
-Email::Email(QString uid, QString date, QString subject, QString from, QString sender, QString reply_to, QString to, QString cc,  QString bcc,  QString in_reply_to, QString message_id):
+Email::Email(QString uid, QString date, QString subject, QString from, QString sender, QString reply_to, QString to, QString cc,  QString bcc,  QString in_reply_to, QString message_id, bool is_read):
     _uid(uid),
     _date(date),
     _subject(subject),
@@ -25,7 +25,9 @@ Email::Email(QString uid, QString date, QString subject, QString from, QString s
     _cc(cc),
     _bcc(bcc),
     _in_reply_to(in_reply_to),
-    _message_id(message_id) {}
+    _message_id(message_id),
+    _isRead(is_read)
+{}
 
 Email::Email() {}
 

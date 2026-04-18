@@ -65,6 +65,7 @@ public:
     void fetchBody(QString);
     void analyzeSinglePart(vmime::shared_ptr<vmime::net::message>, BodyStructure& bs);
 
+
 public slots:
 
     void envelopeEmailsSlot();

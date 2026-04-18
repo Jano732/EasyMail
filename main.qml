@@ -84,36 +84,42 @@ ApplicationWindow {
                             height: 1
                             color: "#eeeeee"
                         }
+                    RowLayout{
 
-                    ColumnLayout {
-                        anchors.margins: 5
-                        anchors.fill: parent
-                        spacing: 5
-
-                        Text {
-                            text: model.subject
-                            font.pointSize: 12
-                            font.bold: true
-                            Layout.fillWidth: true
-                            elide: Text.ElideRight
+                        Rectangle{
+                            radius: 50
                         }
 
-                        RowLayout {
+                        ColumnLayout {
+                            anchors.margins: 5
+                            anchors.fill: parent
+                            spacing: 5
 
                             Text {
-
-                                text: model.from
-                                color: "gray"
-                            }
-
-                            Item {
+                                text: model.subject
+                                font.pointSize: 12
+                                font.bold: true
                                 Layout.fillWidth: true
+                                elide: Text.ElideRight
                             }
 
-                            Text {
-                                text: model.date
-                                color: "gray"
-                                font.pointSize: 10
+                            RowLayout {
+
+                                Text {
+
+                                    text: model.from
+                                    color: "gray"
+                                }
+
+                                Item {
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: model.date
+                                    color: "gray"
+                                    font.pointSize: 10
+                                }
                             }
                         }
                     }

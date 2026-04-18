@@ -151,6 +151,26 @@ vmime::shared_ptr<vmime::security::cert::X509Certificate> ImapClient::loadX509Ce
 }
 
 
+void ImapClient::markAsRead(const QString& uid)
+{
+
+    auto messages = getMessageByUid(uid);
+
+    if(messages.empty())
+        return;
+
+    messages.front()->setFlags(vmime::net::message::FLAG_SEEN, vmime::net::message::FLAG_MODE_ADD);
+}
+
+
+std::vector<vmime::shared_ptr<vmime::net::message>> ImapClient::getMessageByUid(QString uid)
+{
+    vmime::string casted_uid = uid.toStdString();
+    std::vector<vmime::shared_ptr<vmime::net::message>> messages = _folder->getMessages(vmime::net::messageSet::byUID(casted_uid));
+    return messages;
+}
+
+
 // =================== ACCESSORS ===================
 
 

@@ -26,6 +26,8 @@ public:
     void connect();
     void verify();
     void selectDefaultFolder();
+    void markAsRead(const QString&);
+    std::vector<vmime::shared_ptr<vmime::net::message>> getMessageByUid(QString);
 
     // ===== ACCESSORS =====
 

@@ -20,6 +20,7 @@ class Email
     QString _bcc;
     QString _in_reply_to;
     QString _message_id;
+    bool _isRead;
 
     // std::unique_ptr<Message> _message;
     // Message* _message;
@@ -27,7 +28,7 @@ class Email
 public:
     // Email(QString, QString, QString, std::unique_ptr<Message>);
     Email();
-    Email(QString, QString, QString, QString, QString, QString, QString, QString, QString, QString, QString);
+    Email(QString, QString, QString, QString, QString, QString, QString, QString, QString, QString, QString, bool);
 
     QString getUid() const;
     QString getDate() const;
