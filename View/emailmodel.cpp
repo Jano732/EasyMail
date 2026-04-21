@@ -20,7 +20,7 @@ QVariant EmailModel::data(const QModelIndex &index, int role) const
         case FromRole: return email.getFrom();
         case DateRole: return email.getDate();
         case UidRole: return email.getUid();
-        // case BodyRole: return;
+        case isReadRole: return email.getIsRead();
         default: return QVariant();
     }
 }
@@ -30,7 +30,8 @@ QHash<int, QByteArray> EmailModel::roleNames() const {
         {SubjectRole, "subject"},
         {FromRole, "from"},
         {DateRole, "date"},
-        {UidRole, "uid"}
+        {UidRole, "uid"},
+        {isReadRole, "isRead"}
     };
 }
 
@@ -39,4 +40,18 @@ void EmailModel::setEmails(const std::vector<Email> &emails)
     beginResetModel();
     _emails = emails;
     endResetModel();
+}
+
+void EmailModel::setEmail(const Email& email)
+{
+    for(int i = 0; i < _emails.size(); i++)
+    {
+        if(_emails[i].getUid() == email.getUid())
+        {
+            _emails[i] = email;
+            QModelIndex index = createIndex(i, 0);
+            emit dataChanged(index, index);  // odświeża tylko ten jeden wiersz
+            return;
+        }
+    }
 }

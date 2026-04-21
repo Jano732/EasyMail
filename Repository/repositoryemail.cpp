@@ -111,7 +111,7 @@ void RepositoryEmail::envelopeEmailsSlot()
         bool isRead = false;
         int flags = msg->getFlags();
         isRead = ((flags & vmime::net::message::FLAG_SEEN) != 0);
-        qDebug() << flags;
+        qDebug() << isRead;
 
         Email email(uid.trimmed(), convertedDate.trimmed(), subject.trimmed(), from.trimmed(), sender.trimmed(), replyTo.trimmed(), to.trimmed(), cc.trimmed(), bcc.trimmed(), inReplyTo.trimmed(), messageId.trimmed(), isRead);
         envelopedEmails.push_back(email);

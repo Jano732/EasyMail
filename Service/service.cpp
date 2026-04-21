@@ -100,3 +100,12 @@ void Service::openAttachment(int index)
         qDebug() << "Nie można zapisać pliku tymczasowego:" << tempPath;
     }
 }
+
+Q_INVOKABLE bool Service::changeReadState(Email email)
+{
+    if(!email.getIsRead())
+    {
+        email.setRead(true);
+        _email_model->setEmail(email);
+    }
+}

@@ -53,6 +53,12 @@ QString Email::getInreplyTo() {return _in_reply_to; }
 
 QString Email::getMessageId() {return _message_id; }
 
+bool Email::getIsRead() const {return _isRead; }
+
+void Email::setRead(bool state)
+{
+    _isRead = state;
+}
 
 // int Email::sendEmail()
 // {

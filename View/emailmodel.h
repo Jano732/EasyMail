@@ -18,7 +18,8 @@ public:
         FromRole,
         DateRole,
         UidRole,
-        BodyRole
+        BodyRole,
+        isReadRole
     };
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -26,6 +27,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     void setEmails(const std::vector<Email> &);
+    void setEmail(const Email&);
 };
 
 #endif

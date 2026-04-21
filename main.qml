@@ -71,29 +71,40 @@ ApplicationWindow {
                             attachmentModel.clear()
                             var email = service.getEmailByUid(model.uid)
                             service.requestBodyOfAnEmail(email)
+                            service.changeReadState(email)
                         }
-
                     }
 
                     width: ListView.view.width
                     height: 70
 
                     Rectangle {
-                            anchors.bottom: parent.bottom
-                            width: parent.width
-                            height: 1
-                            color: "#eeeeee"
-                        }
-                    RowLayout{
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: 1
+                        color: "#eeeeee"
+                    }
 
-                        Rectangle{
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 8
+                        spacing: 8
+
+                        Rectangle {
                             radius: 50
+                            width: 10
+                            height: 10
+                            color: "#6bb1d1"
+                            Layout.alignment: Qt.AlignTop
+                            Layout.topMargin: 16
+                            visible: !model.isRead
                         }
 
                         ColumnLayout {
-                            anchors.margins: 5
-                            anchors.fill: parent
-                            spacing: 5
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            spacing: 4
 
                             Text {
                                 text: model.subject
@@ -104,14 +115,12 @@ ApplicationWindow {
                             }
 
                             RowLayout {
+                                Layout.fillWidth: true
 
                                 Text {
-
                                     text: model.from
                                     color: "gray"
-                                }
-
-                                Item {
+                                    elide: Text.ElideRight
                                     Layout.fillWidth: true
                                 }
 
@@ -180,5 +189,3 @@ ApplicationWindow {
         }
     }
 }
-
-

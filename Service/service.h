@@ -36,6 +36,7 @@ public:
     Q_INVOKABLE void requestBodyOfAnEmail(Email email);
     Q_INVOKABLE Email getEmailByUid(QString);
     Q_INVOKABLE void openAttachment(int index);
+    Q_INVOKABLE bool changeReadState(Email);
 
 signals:
 

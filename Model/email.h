@@ -41,9 +41,9 @@ public:
     QString getBcc();
     QString getInreplyTo();
     QString getMessageId();
+    bool getIsRead() const;
 
-
-
+    void setRead(bool);
 };
 
 #endif // EMAIL_H
