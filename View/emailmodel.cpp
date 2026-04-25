@@ -50,7 +50,7 @@ void EmailModel::setEmail(const Email& email)
         {
             _emails[i] = email;
             QModelIndex index = createIndex(i, 0);
-            emit dataChanged(index, index);  // odświeża tylko ten jeden wiersz
+            emit dataChanged(index, index);
             return;
         }
     }

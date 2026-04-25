@@ -173,6 +173,7 @@ qt_add_qml_module(EasyMail
     RESOURCES Resources/cacert.pem
     RESOURCES Resources/cacert.pem
     SOURCES View/attachmentmodel.h View/attachmentmodel.cpp
+    SOURCES
 )
 
 # ──────────────────────────────────────────────────────────────

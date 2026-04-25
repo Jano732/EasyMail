@@ -16,7 +16,9 @@
 RepositoryEmail::RepositoryEmail(ImapClient *client, QObject *parent)
     : QObject(parent)
     , _client(client)
-{}
+{
+    _mail_boxes = _client->fetchMailBoxes();
+}
 
 
 void RepositoryEmail::envelopeEmailsSlot()
@@ -111,7 +113,6 @@ void RepositoryEmail::envelopeEmailsSlot()
         bool isRead = false;
         int flags = msg->getFlags();
         isRead = ((flags & vmime::net::message::FLAG_SEEN) != 0);
-        qDebug() << isRead;
 
         Email email(uid.trimmed(), convertedDate.trimmed(), subject.trimmed(), from.trimmed(), sender.trimmed(), replyTo.trimmed(), to.trimmed(), cc.trimmed(), bcc.trimmed(), inReplyTo.trimmed(), messageId.trimmed(), isRead);
         envelopedEmails.push_back(email);
@@ -501,3 +502,5 @@ std::string RepositoryEmail::detectEncoding(const std::string& raw)
         return match.captured(1).trimmed().toLower().toStdString();
     return "7bit";
 }
+
+

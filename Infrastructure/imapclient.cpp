@@ -171,6 +171,29 @@ std::vector<vmime::shared_ptr<vmime::net::message>> ImapClient::getMessageByUid(
 }
 
 
+QList<QString> ImapClient::fetchMailBoxes()
+{
+    QList<QString> mail_boxes;
+
+    try {
+        vmime::shared_ptr<vmime::net::folder> root = _store->getRootFolder();
+        auto folders = root->getFolders(true);
+        for(auto& f : folders)
+        {
+            QString name = QString::fromStdString(f->getName().getBuffer());
+            mail_boxes.append(name);
+            qDebug() << name;
+        }
+    }
+    catch (vmime::exception& e)
+    {
+        qDebug() << e.what();
+    }
+
+    return mail_boxes;
+}
+
+
 // =================== ACCESSORS ===================
 
 

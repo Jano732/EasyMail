@@ -28,6 +28,7 @@ public:
     void selectDefaultFolder();
     void markAsRead(const QString&);
     std::vector<vmime::shared_ptr<vmime::net::message>> getMessageByUid(QString);
+    QList<QString> fetchMailBoxes();
 
     // ===== ACCESSORS =====
 

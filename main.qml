@@ -41,7 +41,7 @@ ApplicationWindow {
                 }
 
                 Rectangle{
-                    Layout.alignment: Qt.AlignVCenter
+                    Layout.alignment: Qt.AlignLeft
                     width: 120
                     height: 30
                     color: "transparent"

@@ -42,6 +42,7 @@ private:
     ImapClient *_client;
     std::vector<BodyStructure> _parts;
     std::vector<vmime::shared_ptr<vmime::net::message>> _messages;
+    QList<QString> _mail_boxes;
 
     void explorePart(vmime::shared_ptr<const vmime::net::messagePart>, int, int, std::vector<int>);
     void analyzeMultiPartAlternative(vmime::shared_ptr<vmime::net::message>);
@@ -58,12 +59,15 @@ private:
     bool isDirectChildOf(const BodyStructure&, const BodyStructure&);
     std::string detectEncoding(const std::string&);
 
+
+
 public:
 
     RepositoryEmail(ImapClient*, QObject* parent = nullptr);
     void envelope();
     void fetchBody(QString);
     void analyzeSinglePart(vmime::shared_ptr<vmime::net::message>, BodyStructure& bs);
+
 
 
 public slots:
