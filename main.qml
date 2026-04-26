@@ -36,17 +36,71 @@ ApplicationWindow {
             RowLayout {
                 anchors.fill: parent
                 anchors.margins: 5
-                Item {
-                    Layout.fillWidth: true
-                }
 
-                Rectangle{
-                    Layout.alignment: Qt.AlignLeft
-                    width: 120
+                Rectangle {
+                    width: 30
                     height: 30
                     color: "transparent"
-                    border.color: "black"
-                    radius: 3
+                    // border.color: "black"
+                    // radius: 3
+
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 5
+
+                        Rectangle { width: 30; height: 4; color: "black"; radius: 5 }
+                        Rectangle { width: 30; height: 4; color: "black"; radius: 5 }
+                        Rectangle { width: 30; height: 4; color: "black"; radius: 5 }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: drawer.open()
+                    }
+                }
+
+                Item { Layout.fillWidth: true }
+            }
+
+            Drawer {
+                id: drawer
+                width: 250
+                height: parent.height
+                edge: Qt.LeftEdge
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 16
+                    spacing: 8
+
+                    Text {
+                        text: "Skrzynki odbiorcze"
+                        font.pointSize: 16
+                        font.bold: true
+                    }
+
+                    Rectangle { height: 1; Layout.fillWidth: true; color: "#ddd" }
+
+                    // Text { text: "Odebrane"; font.pointSize: 12 }
+                    // Text { text: "Wysłane";  font.pointSize: 12 }
+                    // Text { text: "Wersje robocze"; font.pointSize: 12 }
+                    // Text { text: "Kosz"; font.pointSize: 12 }
+
+                    ListView{
+                        model: mailboxModel
+                        Layout.fillWidth: true
+
+                        delegate: Rectangle {
+
+                            Rectangle{
+
+                            }
+                        }
+                    }
+
+                    Item { Layout.fillHeight: true }
+
+                    // Text { text: "⚙ Ustawienia"; font.pointSize: 12 }
                 }
             }
         }

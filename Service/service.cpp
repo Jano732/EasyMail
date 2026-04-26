@@ -107,5 +107,7 @@ Q_INVOKABLE bool Service::changeReadState(Email email)
     {
         email.setRead(true);
         _email_model->setEmail(email);
+        return true;
     }
+    return false;
 }
