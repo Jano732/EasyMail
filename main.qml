@@ -81,26 +81,50 @@ ApplicationWindow {
 
                     Rectangle { height: 1; Layout.fillWidth: true; color: "#ddd" }
 
-                    // Text { text: "Odebrane"; font.pointSize: 12 }
-                    // Text { text: "Wysłane";  font.pointSize: 12 }
-                    // Text { text: "Wersje robocze"; font.pointSize: 12 }
-                    // Text { text: "Kosz"; font.pointSize: 12 }
-
-                    ListView{
+                    ListView {
                         model: mailboxModel
                         Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
 
                         delegate: Rectangle {
 
-                            Rectangle{
+                            width: ListView.view.width
+                            height: 50
+                            color: "white"
 
+                            MouseArea{
+                                anchors.fill: parent
+                                onClicked: {
+                                    service.changeMailbox(model.name)
+                                }
+
+                            }
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 8
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: model.name
+                                    color: "black"
+                                    elide: Text.ElideRight
+                                    verticalAlignment: Text.AlignVCenter
+                                    font.bold: true
+                                }
+
+                                Text {
+                                    text: model.elements
+                                    color: "gray"
+                                    verticalAlignment: Text.AlignVCenter
+                                }
                             }
                         }
                     }
 
-                    Item { Layout.fillHeight: true }
-
-                    // Text { text: "⚙ Ustawienia"; font.pointSize: 12 }
+                    // Item { Layout.fillHeight: true }
                 }
             }
         }

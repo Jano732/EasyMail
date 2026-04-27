@@ -17,9 +17,8 @@ RepositoryEmail::RepositoryEmail(ImapClient *client, QObject *parent)
     : QObject(parent)
     , _client(client)
 {
-    _mail_boxes = _client->fetchMailBoxes();
+    // loadMailboxesSlot();
 }
-
 
 void RepositoryEmail::envelopeEmailsSlot()
 {
@@ -501,6 +500,17 @@ std::string RepositoryEmail::detectEncoding(const std::string& raw)
     if (match.hasMatch())
         return match.captured(1).trimmed().toLower().toStdString();
     return "7bit";
+}
+
+void RepositoryEmail::loadMailboxesSlot()
+{
+    qDebug() << "wywołano loadMailboxesSlot";
+    _mail_boxes = _client->getMailboxes();
+    qDebug() << _mail_boxes.size();
+    if(!_mail_boxes.isEmpty()) {
+        emit mailboxesLoaded(_mail_boxes);
+        qDebug() << "poszedl emit";
+    }
 }
 
 

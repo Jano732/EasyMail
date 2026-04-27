@@ -22,6 +22,8 @@ ImapClient::ImapClient(const QString url, const int port, const QString log, con
     , _password(password)
 {
     connect();
+    fetchMailBoxes();
+    selectDefaultFolder();
     // selectInbox("INBOX");
     // qDebug("FIN");
 }
@@ -54,16 +56,13 @@ void ImapClient::connect()
         if(_store->isConnected())
         {
             qDebug() << "Connected!";
-            selectDefaultFolder();
         }
         else qDebug() << "Not connected!";
     }
     catch(vmime::exception& e)
     {
         qDebug() << "Vmime exception - ImapClient::connect(): " << e.what();
-
     }
-
     catch (...)
     {
         qDebug() << "Unknown Exception - ImapClient::connect()";
@@ -171,26 +170,54 @@ std::vector<vmime::shared_ptr<vmime::net::message>> ImapClient::getMessageByUid(
 }
 
 
-QList<QString> ImapClient::fetchMailBoxes()
+void ImapClient::fetchMailBoxes()
 {
-    QList<QString> mail_boxes;
-
-    try {
-        vmime::shared_ptr<vmime::net::folder> root = _store->getRootFolder();
-        auto folders = root->getFolders(true);
-        for(auto& f : folders)
+    MailBox mb;
+    vmime::shared_ptr<vmime::net::folder> root = _store->getRootFolder();
+    auto folders = root->getFolders(true);
+    for(auto& f : folders)
+    {
+        QString name = QString::fromStdString(f->getName().getBuffer());
+        try{
+            f->open(vmime::net::folder::MODE_READ_ONLY);
+        }
+        catch (vmime::exception& e)
         {
-            QString name = QString::fromStdString(f->getName().getBuffer());
-            mail_boxes.append(name);
-            qDebug() << name;
+            qDebug() << "fetchMailBoxes error: " << e.what();
+            continue;
+        }
+        vmime::size_t elements = f->getMessageCount();
+        f->close(false);
+        mb.name = name;
+        mb.elements = elements;
+        _mailboxes.append(mb);
+        qDebug() << name << ", " << elements;
+    }
+}
+
+
+
+void ImapClient::changeMailbox(QString mailboxname)
+{
+    try
+    {
+        _folder->close(false);
+
+        vmime::net::folder::path path(vmime::net::folder::path::component(mailboxname.toStdString()));
+        for(auto& f : _mailboxes)
+        {
+            if(mailboxname == f.name){
+                _folder = _store->getFolder(path);
+                _folder->open(vmime::net::folder::MODE_READ_WRITE);
+                emit mailbox_changed();
+                return;
+            }
         }
     }
-    catch (vmime::exception& e)
+    catch(vmime::exception& e)
     {
         qDebug() << e.what();
     }
-
-    return mail_boxes;
 }
 
 
@@ -203,6 +230,8 @@ QString ImapClient::getUrl() { return _url; }
 QString ImapClient::getLogin() {return _login; }
 
 vmime::shared_ptr<vmime::net::folder> ImapClient::getFolder() { return _folder; }
+
+QList<MailBox> ImapClient::getMailboxes() { return _mailboxes; }
 
 
 // std::vector<Email> ImapClient::getEmails() {return _emails; }

@@ -1,21 +1,16 @@
-
+#pragma once
 #ifndef MAILBOXESMODEL_H
 #define MAILBOXESMODEL_H
 
 #include <QAbstractListModel>
-#include "../Model/email.h"
+#include "Infrastructure/imapclient.h"
 
-struct MailBox{
-
-    QString name;
-    int elements;
-};
 
 class MailboxModel : public QAbstractListModel
 {
     Q_OBJECT
 
-    std::vector<MailBox> _mailboxes;
+    QList<MailBox> _mailboxes;
 
 public:
     explicit MailboxModel(QObject *parent = nullptr);
@@ -29,7 +24,7 @@ public:
     QVariant data(const QModelIndex&, int) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    void setMailBoxes(std::vector<MailBox>);
+    void setMailBoxes(QList<MailBox>);
 
 };
 

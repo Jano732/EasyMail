@@ -5,18 +5,19 @@
 #include <qtconcurrentrun.h>
 #include <QDesktopServices>
 
-Service::Service(RepositoryEmail *repo, EmailModel* emailmodel, AttachmentModel* attmodel, QObject* parent)
+Service::Service(RepositoryEmail *repo, EmailModel* emailmodel, AttachmentModel* attmodel, MailboxModel* mailboxmodel, QObject* parent)
     : QObject(parent)
     , _repo(repo)
     , _email_model(emailmodel)
     , _attachment_model(attmodel)
+    , _mailboxmodel(mailboxmodel)
 {}
 
 void Service::onEmailsEnvelope(std::vector<Email>& emails)
 {
     _emails = emails;
     _email_model->setEmails(_emails);
-    emit envelopedDataReady();
+    // emit envelopedDataReady();
 }
 
 void Service::envelopeEmails()
@@ -110,4 +111,17 @@ Q_INVOKABLE bool Service::changeReadState(Email email)
         return true;
     }
     return false;
+}
+
+void Service::onFetchedMailboxes(QList<MailBox> mailboxes)
+{
+    qDebug() << "wywołano onFetchedMailboxes";
+    _mailboxmodel->setMailBoxes(mailboxes);
+}
+
+
+Q_INVOKABLE void Service::changeMailbox(QString mailbox)
+{
+    qDebug() << mailbox;
+    emit changeMailbox_signal(mailbox);
 }

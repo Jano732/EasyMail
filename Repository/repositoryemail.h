@@ -42,7 +42,7 @@ private:
     ImapClient *_client;
     std::vector<BodyStructure> _parts;
     std::vector<vmime::shared_ptr<vmime::net::message>> _messages;
-    QList<QString> _mail_boxes;
+    QList<MailBox> _mail_boxes;
 
     void explorePart(vmime::shared_ptr<const vmime::net::messagePart>, int, int, std::vector<int>);
     void analyzeMultiPartAlternative(vmime::shared_ptr<vmime::net::message>);
@@ -73,6 +73,7 @@ public:
 public slots:
 
     void envelopeEmailsSlot();
+    void loadMailboxesSlot();
 
 signals:
 
@@ -80,6 +81,7 @@ signals:
     void htmlReady(QString);
     void attachmentsReady(QList<RepositoryEmail::Attachment>);
     void resetAttachments();
+    void mailboxesLoaded(QList<MailBox>);
 
 };
 

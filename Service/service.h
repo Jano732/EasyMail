@@ -1,6 +1,7 @@
 #pragma once
 #include "QtCore/qtimer.h"
 #include "View/attachmentmodel.h"
+#include "View/mailboxesmodel.h"
 #ifndef SERVICE_H
 #define SERVICE_H
 
@@ -16,6 +17,7 @@ class Service : public QObject
     RepositoryEmail  *_repo;
     EmailModel       *_email_model;
     AttachmentModel *_attachment_model;
+    MailboxModel *_mailboxmodel;
     std::vector<Email> _emails;
     std::vector<Message> _messages;
 
@@ -29,7 +31,7 @@ class Service : public QObject
 
 public:
 
-    explicit Service(RepositoryEmail*, EmailModel*, AttachmentModel*, QObject* parent = nullptr);
+    explicit Service(RepositoryEmail*, EmailModel*, AttachmentModel*, MailboxModel* ,QObject* parent = nullptr);
 
     void envelopeEmails();
 
@@ -37,6 +39,7 @@ public:
     Q_INVOKABLE Email getEmailByUid(QString);
     Q_INVOKABLE void openAttachment(int index);
     Q_INVOKABLE bool changeReadState(Email);
+    Q_INVOKABLE void changeMailbox(QString);
 
 signals:
 
@@ -45,12 +48,14 @@ signals:
     void requestBody(QString);
     void htmlReady(QString);
     void attachmentsReady(QList<RepositoryEmail::Attachment>);
+    void changeMailbox_signal(QString);
 
 public slots:
 
     void onEmailsEnvelope(std::vector<Email>&);
     void onHtmlReady(QString);
     void onAttachmentsReady(QList<RepositoryEmail::Attachment>);
+    void onFetchedMailboxes(QList<MailBox>);
     // void onResetAttachments();
 
 };

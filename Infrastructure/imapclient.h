@@ -1,5 +1,4 @@
 #pragma once
-#include "Infrastructure/tracer.h"
 #include "vmime/net/folder.hpp"
 #include "vmime/net/session.hpp"
 #include "vmime/security/cert/X509Certificate.hpp"
@@ -7,8 +6,17 @@
 #define IMAPCLIENT_H
 #include <QSslSocket>
 
+struct MailBox{
+
+    QString name;
+    int elements;
+};
+
 class ImapClient : public QObject
 {
+
+    Q_OBJECT
+
     const QString _url;
     const int _port;
     const QString _login;
@@ -16,6 +24,7 @@ class ImapClient : public QObject
     vmime::shared_ptr<vmime::net::session> _session;
     vmime::shared_ptr<vmime::net::store> _store;
     vmime::shared_ptr<vmime::net::folder> _folder;
+    QList<MailBox> _mailboxes;
 
     vmime::shared_ptr<vmime::security::cert::X509Certificate> loadX509CertificateFromFile(const std::string&);
 
@@ -28,7 +37,8 @@ public:
     void selectDefaultFolder();
     void markAsRead(const QString&);
     std::vector<vmime::shared_ptr<vmime::net::message>> getMessageByUid(QString);
-    QList<QString> fetchMailBoxes();
+    void fetchMailBoxes();
+
 
     // ===== ACCESSORS =====
 
@@ -36,8 +46,18 @@ public:
     QString getLogin();
     int getUid();
     void setUid(int);
+    QList<MailBox> getMailboxes();
 
     vmime::shared_ptr<vmime::net::folder> getFolder();
+
+signals:
+
+    void fetched_mailboxes_signal(QList<MailBox>);
+    void mailbox_changed();
+
+public slots:
+
+    void changeMailbox(QString);
 
 };
 

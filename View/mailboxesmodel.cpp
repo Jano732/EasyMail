@@ -1,6 +1,6 @@
 #include "mailboxesmodel.h"
 
-MailboxModel::MailboxModel(QObject *parent)  {}
+MailboxModel::MailboxModel(QObject *parent) : QAbstractListModel(parent) {}
 
 int MailboxModel::rowCount(const QModelIndex &parent) const {
 
@@ -29,8 +29,9 @@ QHash<int, QByteArray> MailboxModel::roleNames() const {
     };
 }
 
-void MailboxModel::setMailBoxes(std::vector<MailBox> mailboxes)
+void MailboxModel::setMailBoxes(QList<MailBox> mailboxes)
 {
+    qDebug() << "wywołano setMailBoxes";
     if(!mailboxes.empty())
     {
         beginResetModel();

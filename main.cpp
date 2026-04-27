@@ -20,21 +20,28 @@ int main(int argc, char *argv[])
     auto *repository = new RepositoryEmail(client);
     auto *emailModel = new EmailModel();
     auto *attachmentModel = new AttachmentModel();
-    auto *service = new Service(repository, emailModel, attachmentModel);
+    auto *mailboxModel = new MailboxModel();
+    auto *service = new Service(repository, emailModel, attachmentModel, mailboxModel);
 
     QObject::connect(repository, &RepositoryEmail::emailsEnvelopedReady, service, &Service::onEmailsEnvelope);
     QObject::connect(service, &Service::requestEnvelopedEmails,repository, &RepositoryEmail::envelopeEmailsSlot);
     QObject::connect(service, &Service::requestBody, repository, &RepositoryEmail::fetchBody);
     QObject::connect(repository, &RepositoryEmail::htmlReady, service, &Service::onHtmlReady);
     QObject::connect(repository, &RepositoryEmail::attachmentsReady,service, &Service::onAttachmentsReady);
+    QObject::connect(repository, &RepositoryEmail::mailboxesLoaded, service, &Service::onFetchedMailboxes);
+    QObject::connect(service, &Service::changeMailbox_signal, client, &ImapClient::changeMailbox);
+    QObject::connect(client, &ImapClient::mailbox_changed, repository, &RepositoryEmail::envelopeEmailsSlot);
+
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("emailModel", emailModel);
     engine.rootContext()->setContextProperty("service", service);
+    engine.rootContext()->setContextProperty("mailboxModel", mailboxModel);
     engine.rootContext()->setContextProperty("attachmentModel", attachmentModel);
     engine.load(QUrl(QStringLiteral("qrc:/EmailClient/main.qml")));
 
     service->envelopeEmails();
+    repository->loadMailboxesSlot();
 
     if (engine.rootObjects().isEmpty())
         return -1;
