@@ -149,6 +149,11 @@ vmime::shared_ptr<vmime::security::cert::X509Certificate> ImapClient::loadX509Ce
     return cert;
 }
 
+void ImapClient::onLoginReady()
+{
+    emit requestLoginSignal(_login);
+}
+
 
 void ImapClient::markAsRead(const QString& uid)
 {
@@ -225,7 +230,6 @@ void ImapClient::changeMailbox(QString mailboxname)
 
 
 QString ImapClient::getUrl() { return _url; }
-
 
 QString ImapClient::getLogin() {return _login; }
 

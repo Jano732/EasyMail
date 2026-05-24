@@ -54,10 +54,12 @@ signals:
 
     void fetched_mailboxes_signal(QList<MailBox>);
     void mailbox_changed();
+    void requestLoginSignal(QString);
 
 public slots:
 
     void changeMailbox(QString);
+    void onLoginReady();
 
 };
 

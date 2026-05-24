@@ -117,6 +117,7 @@ void RepositoryEmail::envelopeEmailsSlot()
         envelopedEmails.push_back(email);
     }
 
+    std::reverse(envelopedEmails.begin(), envelopedEmails.end());
     emit emailsEnvelopedReady(envelopedEmails);
 }
 

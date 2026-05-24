@@ -125,3 +125,14 @@ Q_INVOKABLE void Service::changeMailbox(QString mailbox)
     qDebug() << mailbox;
     emit changeMailbox_signal(mailbox);
 }
+
+Q_INVOKABLE QString Service::getLogin()
+{
+    return _login;
+}
+
+void Service::onLoginReady(QString login)
+{
+    _login = login;
+    emit loginChanged();
+}

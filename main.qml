@@ -60,6 +60,15 @@ ApplicationWindow {
                 }
 
                 Item { Layout.fillWidth: true }
+
+                Text {
+                    text: service.login
+                    color: "black"
+                    font.pointSize: 11
+                    font.bold: true
+                    verticalAlignment: Text.AlignVCenter
+                    anchors.rightMargin: 8
+                }
             }
 
             Drawer {

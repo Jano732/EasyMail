@@ -14,12 +14,15 @@ class Service : public QObject
 {
     Q_OBJECT
 
+    Q_PROPERTY(QString login READ getLogin NOTIFY loginChanged)
+
     RepositoryEmail  *_repo;
     EmailModel       *_email_model;
     AttachmentModel *_attachment_model;
     MailboxModel *_mailboxmodel;
     std::vector<Email> _emails;
     std::vector<Message> _messages;
+    QString _login;
 
     QString _pendingHtml;
     QList<RepositoryEmail::Attachment> _pendingAttachments;
@@ -40,6 +43,7 @@ public:
     Q_INVOKABLE void openAttachment(int index);
     Q_INVOKABLE bool changeReadState(Email);
     Q_INVOKABLE void changeMailbox(QString);
+    Q_INVOKABLE QString getLogin();
 
 signals:
 
@@ -49,6 +53,8 @@ signals:
     void htmlReady(QString);
     void attachmentsReady(QList<RepositoryEmail::Attachment>);
     void changeMailbox_signal(QString);
+    void requestLogin();
+    void loginChanged();
 
 public slots:
 
@@ -56,6 +62,7 @@ public slots:
     void onHtmlReady(QString);
     void onAttachmentsReady(QList<RepositoryEmail::Attachment>);
     void onFetchedMailboxes(QList<MailBox>);
+    void onLoginReady(QString);
     // void onResetAttachments();
 
 };

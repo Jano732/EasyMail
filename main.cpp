@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     QtWebEngineQuick::initialize();
     QApplication a(argc, argv);
 
-    auto *client = new ImapClient("imap.poczta.onet.pl", 993, "poniatowski@op.pl", "password");
+    auto *client = new ImapClient("imap.poczta.onet.pl", 993, "poniatowski@op.pl", "NFXT-AW57-OK6K-N0QJ");
 
     auto *repository = new RepositoryEmail(client);
     auto *emailModel = new EmailModel();
@@ -31,6 +31,8 @@ int main(int argc, char *argv[])
     QObject::connect(repository, &RepositoryEmail::mailboxesLoaded, service, &Service::onFetchedMailboxes);
     QObject::connect(service, &Service::changeMailbox_signal, client, &ImapClient::changeMailbox);
     QObject::connect(client, &ImapClient::mailbox_changed, repository, &RepositoryEmail::envelopeEmailsSlot);
+    QObject::connect(service, &Service::requestLogin, client , &ImapClient::onLoginReady);
+    QObject::connect(client, &ImapClient::requestLoginSignal, service, &Service::onLoginReady);
 
 
     QQmlApplicationEngine engine;
@@ -40,6 +42,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("attachmentModel", attachmentModel);
     engine.load(QUrl(QStringLiteral("qrc:/EmailClient/main.qml")));
 
+    service->requestLogin();
     service->envelopeEmails();
     repository->loadMailboxesSlot();
 
