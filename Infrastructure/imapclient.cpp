@@ -180,10 +180,20 @@ void ImapClient::fetchMailBoxes()
     MailBox mb;
     vmime::shared_ptr<vmime::net::folder> root = _store->getRootFolder();
     auto folders = root->getFolders(true);
+
     for(auto& f : folders)
     {
-        QString name = QString::fromStdString(f->getName().getBuffer());
-        try{
+        vmime::net::folder::path fullPath = f->getFullPath();
+
+        // Nazwa do UI — sklejamy komponenty przez '/'
+        QString name;
+        for (int i = 0; i < static_cast<int>(fullPath.getSize()); ++i)
+        {
+            if (i > 0) name += '/';
+            name += QString::fromStdString(fullPath.getComponentAt(i).getBuffer());
+        }
+
+        try {
             f->open(vmime::net::folder::MODE_READ_ONLY);
         }
         catch (vmime::exception& e)
@@ -191,10 +201,13 @@ void ImapClient::fetchMailBoxes()
             qDebug() << "fetchMailBoxes error: " << e.what();
             continue;
         }
+
         vmime::size_t elements = f->getMessageCount();
         f->close(false);
+
         mb.name = name;
         mb.elements = elements;
+        mb.vmimePath = fullPath;  // zachowaj oryginalną ścieżkę!
         _mailboxes.append(mb);
         qDebug() << name << ", " << elements;
     }
@@ -208,16 +221,19 @@ void ImapClient::changeMailbox(QString mailboxname)
     {
         _folder->close(false);
 
-        vmime::net::folder::path path(vmime::net::folder::path::component(mailboxname.toStdString()));
         for(auto& f : _mailboxes)
         {
-            if(mailboxname == f.name){
-                _folder = _store->getFolder(path);
+            if(mailboxname == f.name)
+            {
+                // Używamy oryginalnej ścieżki vmime — zero konwersji, zero problemów z kodowaniem
+                _folder = _store->getFolder(f.vmimePath);
                 _folder->open(vmime::net::folder::MODE_READ_WRITE);
                 emit mailbox_changed();
                 return;
             }
         }
+
+        qDebug() << "Mailbox not found:" << mailboxname;
     }
     catch(vmime::exception& e)
     {

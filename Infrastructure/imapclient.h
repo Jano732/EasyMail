@@ -6,10 +6,10 @@
 #define IMAPCLIENT_H
 #include <QSslSocket>
 
-struct MailBox{
-
+struct MailBox {
     QString name;
     int elements;
+    vmime::net::folder::path vmimePath;
 };
 
 class ImapClient : public QObject
